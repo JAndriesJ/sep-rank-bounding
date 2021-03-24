@@ -28,14 +28,16 @@ function Modelξₜˢᵉᵖ(ρ,t,d,con_list)
     L_xxᵀ_tens_yyᵀ  = index_to_var(Lx,xxᵀ_tens_yyᵀ)
     @constraint(model, fix_con,L_xxᵀ_tens_yyᵀ .==  ρ)
 # Localizing g constraint: L ≥ 0 on M₂ₜ(S)
-    if "S₁" ∈ con_list
+    if occursin("S₁",con_list)
         loc_con = make_loc_cons(ρ,t,d,Lx)
-        for key in keys(loc_con)
-            @constraint(model, Symmetric(loc_con[key]) in PSDCone())
-        end
+    elseif occursin("S₂",con_list)
+        loc_con = make_loc_cons_var_1(ρ,t,d,Lx)
+    end
+    for key in keys(loc_con)
+        @constraint(model, Symmetric(loc_con[key]) in PSDCone())
     end
 # weak G Constraints
-    if "wG" ∈ con_list
+    if occursin("wG",con_list)
         println("----------------Weak G-constraints are active")
         weakG_con = make_weakG_con(ρ,t,d,Lx)
         for key in keys(weakG_con)
@@ -43,7 +45,7 @@ function Modelξₜˢᵉᵖ(ρ,t,d,con_list)
         end
     end
 # G Constraints
-    if "G" ∈ con_list
+    if  occursin("G",con_list)
         println("----------------G-constraints are active")
         G_con                 = make_G_con(ρ,t,d,Lx)
         @constraint(model, Symmetric(G_con) in PSDCone())

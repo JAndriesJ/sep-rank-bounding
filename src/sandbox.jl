@@ -19,14 +19,19 @@
 ## states examples:
 d = 3
 n = 2*d
-t = 2
+t = 4
 ## Example states
-ρ_sep = get_sep_example(d)
-# ρ_ent = get_ent_example(d)
-# ρ_rand  = generate_random_states(2:4,2:9,343)
+for t in 2:4
+    ρ_sep = get_sep_example(d)
+    run_batch(t,ρ_sep,"sep t = $t")
 
-ρ_dict = ρ_sep
-# run_batch(t,ρ_dict,"random")
+    ρ_rand  = generate_random_states(2:4,2:9,343)
+    run_batch(t,ρ_sep,"rand t = $t")
+
+    # ρ_ent = get_ent_example(d)
+    # run_batch(t,ρ_ent,"sep t = $t")
+end
+
 
 
 # ρ = ρ_dict[3, 2, "s"]

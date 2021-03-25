@@ -11,7 +11,10 @@ export gen_rand_state,
        get_sep_example,
        get_ent_example
 
-makediagone(ρ) = diagm(1 ./ sqrt.(diag(ρ))) * ρ * diagm( 1 ./ sqrt.(diag(ρ)))
+# This does not work well when there are zeros on the diagonal
+makediagone(ρ)  = diagm(1 ./ sqrt.(diag(ρ)) ) * ρ * diagm(1 ./ sqrt.(diag(ρ)) )
+maketraceone(ρ) = ρ/tr(ρ)
+
 
 """
 generates a matrix of the form ∑aᵀa⊗bᵀb, with a,b random vectors.
@@ -27,7 +30,7 @@ function gen_rand_state(d::Integer, r::Integer,seed = 343)
         ρ = kron(A,B) + ρ
     end
     # TODO make the trace equal to 1
-    return  ρ/r #makediagone(ρ)
+    return  maketraceone(ρ) #makediagone(ρ)
 end
 
 """
@@ -66,7 +69,7 @@ psep(i₀::Int,i₁::Int,n::Int) = sq(ψ(i₀,i₁,n))
 Separable state examples:
 """
 
-function get_sep_example(d)
+function get_sep_example(d = 3)
     ρ = Dict()
     ## Separable: http://arxiv.org/abs/1210.0111v2 Table I
     # |00><00| + |11><11|
@@ -90,14 +93,14 @@ function get_sep_example(d)
     # |00><00| + |01><01| + |02><02| + |11><11| + |12><12|
     ρ[d,5,"s"] =  psep(1,1,d) + psep(1,2,d) +  psep(1,3,d) + psep(2,2,d) + psep(2,3,d)
 
-    return ρ
+    return maketraceone(ρ)
 end
 
 
 """
 Entangled state examples:
 """
-function get_ent_example(d)
+function get_ent_example(d = 3)
     ρ = Dict()
     ## Entangled states examples
     # Example 1: https://en.wikipedia.org/wiki/Quantum_entanglement
@@ -119,7 +122,7 @@ function get_ent_example(d)
     a =  1/sqrt(2) ; p = rand();
     ψₐ = a*(ψ(1,2,d) - ψ(2,1,d))
     ρ[d,"e3"] = p*sq(ψₐ) + (1 - p)*psep(1,1,d)
-    return ρ
+    return maketraceone(ρ)
 end
 
 

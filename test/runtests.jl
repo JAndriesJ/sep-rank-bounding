@@ -1,6 +1,6 @@
 # include("ju-sep-rank.jl")
 module runtests
-include("C:\\Users\\andries\\all-my-codes\\ju-sep-rank\\test\\testMoments.jl")
+include(pwd()*"\\test\\testMoments.jl")
 
 
 # using .seprank

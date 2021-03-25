@@ -1,5 +1,5 @@
 module testMoments
-include("C:\\Users\\andries\\all-my-codes\\ju-sep-rank\\src\\moments.jl")
+include(pwd()*"\\src\\moments.jl")
 using .moments
 using Test
 using LinearAlgebra

@@ -91,7 +91,7 @@ function make_weakG_con(ρ,t::Int64,d::Int64,Lx)
         LMBexp_ℓ          = make_mon_expo_mat(n,ℓ,false)   # exponents of [x,y]₌ₗ[x,y]₌ₗᵀ
         LMBexp_1ℓ         = var_kron(xxᵀ_tens_yyᵀ,LMBexp_ℓ)# exponents of  (xxᵀ⊗yyᵀ)⊗([x,y]₌ₗ[x,y]₌ₗᵀ)
         LMB_ℓ             = index_to_var(Lx,LMBexp_ℓ)      # L([x,y]₌ₗ[x,y]₌ₗᵀ)
-        RTerm             = index_to_var(Lx,LMBexp_1ℓ)     # L((xxᵀ⊗yyᵀ)⊗([x,y]₌ₗ[x,y]₌ₗᵀ))
+        Rterm             = index_to_var(Lx,LMBexp_1ℓ)     # L((xxᵀ⊗yyᵀ)⊗([x,y]₌ₗ[x,y]₌ₗᵀ))
 
         Lterm             = kron(ρ,LMB_ℓ)                  # ρ⊗L([x,y]₌ₗ[x,y]₌ₗᵀ)
         weakG_con[ℓ]      = Lterm - Rterm                  # ρ⊗L([x]₌ₗ[x]₌ₗᵀ) - L((xxᵀ⊗yyᵀ)⊗([x,y]₌ₗ[x,y]₌ₗᵀ)) ⪰ 0, ℓ ∈ ,1,t-deg(G)/2

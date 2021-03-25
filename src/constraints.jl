@@ -1,6 +1,6 @@
 module constraints
 using LinearAlgebra
-include("C:\\Users\\andries\\all-my-codes\\ju-sep-rank\\src\\moments.jl")
+include(pwd()*"\\src\\moments.jl")
 using .moments
 
 export index_to_var,

@@ -1,5 +1,5 @@
 module seprank
-sourceDir = "C:\\Users\\andries\\all-my-codes\\ju-sep-rank\\src\\"
+sourceDir = pwd()*"\\src\\"
 include(sourceDir*"data.jl")
 include(sourceDir*"moments.jl")
 include(sourceDir*"constraints.jl")

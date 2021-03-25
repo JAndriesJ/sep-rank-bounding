@@ -3,17 +3,20 @@ module sep_model
 export Modelξₜˢᵉᵖ,
        export_model
 
+
+srcDir = pwd()*"\\src\\"
+include(srcDir*"moments.jl")
+include(srcDir*"constraints.jl")
+using .moments
+using .constraints
+
 using JuMP
 using LinearAlgebra
 using Dates
 
-
-include("C:\\Users\\andries\\all-my-codes\\ju-sep-rank\\src\\moments.jl")
-using .moments
-include("C:\\Users\\andries\\all-my-codes\\ju-sep-rank\\src\\constraints.jl")
-using .constraints
-
-
+"""
+The model
+"""
 function Modelξₜˢᵉᵖ(ρ,t,d,con_list)
     n = 2*d
     model = Model()

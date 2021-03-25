@@ -1,4 +1,4 @@
-    sourceDir = "C:\\Users\\andries\\all-my-codes\\ju-sep-rank\\src\\"
+    sourceDir = pwd()*"\\src\\"
     include(sourceDir*"data.jl")
     include(sourceDir*"moments.jl")
     include(sourceDir*"constraints.jl")
@@ -15,14 +15,16 @@
 
     using .batch_run
 ##
-
 ## batch
-run_batch()
+# run_batch()
+## states examples:
+d = 3
+ρ_sep = get_sep_example(d)
+
+ρ_ent = get_ent_example(d)
+
 
 # Pkg.add("CSV")
-
-
-
 # Pkg.add("StringDistances")
 
 # using LinearAlgebra

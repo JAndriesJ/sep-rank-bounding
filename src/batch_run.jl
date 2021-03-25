@@ -1,6 +1,6 @@
 module batch_run
 using DataFrames
-sourceDir = "C:\\Users\\andries\\all-my-codes\\ju-sep-rank\\src\\"
+sourceDir = pwd()*"\\src\\"
 include(sourceDir*"data.jl")
 include(sourceDir*"model.jl")
 include(sourceDir*"compute.jl")
@@ -12,32 +12,26 @@ using .compute
 # using StringDistances
 # using CSV
 
-
 export run_batch
 
-function run_batch()
-    d_set = 2:6
-    r_set = 2:9
-    ρᵈʳ      = generate_random_states(d_set,r_set,343)
+
+function run_batch(t::Int,ρ_dict,save_file)
     con_list_list = ["S₁","S₂","S₁G","S₂G","S₁wG","S₂wG"] #
-    t = 3
-
     # bounds_array = Dict()
-
-    touch("C:\\Users\\andries\\all-my-codes\\ju-sep-rank\\bounds.txt")
+    touch(pwd()*"\\$save_file bounds.txt")
     for con in con_list_list
         # bounds_array[con] = Dict()
-        for key in keys(ρᵈʳ)
-            ρ = ρᵈʳ[key]
+        for key in keys(ρ_dict)
+            ρ = ρ_dict[key]
             sep_mod = Modelξₜˢᵉᵖ(ρ,t,key[1], con)
             ov =  Computeξₜˢᵉᵖ(sep_mod)
-            # pstat = primal_status(model)
-            # dstat =  dual_status(model)
+            pstat = primal_status(model)
+            dstat =  dual_status(model)
             # ov =  objective_value(sep_mod_opt)
             # con_ind = findall(con, con_list_list, Levenshtein())[1]
             # bounds_array[con][key...] = ov
             open("C:\\Users\\andries\\all-my-codes\\ju-sep-rank\\bounds.txt","a") do io
-                write(io, con*"$key $ov \n")
+                write(io, con*",$key,$pstat,$dstat,$ov \n")
             end
         end
 

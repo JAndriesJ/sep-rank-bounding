@@ -19,7 +19,7 @@ function Computeξₜˢᵉᵖ(model)
     if string(primal_status(model)) == "NO_SOLUTION"
         return NaN
     else
-        return objective_value(model)
+        return model
     end
 end
 

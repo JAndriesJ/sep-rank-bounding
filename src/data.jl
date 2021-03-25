@@ -34,8 +34,7 @@ end
 Generates some random matrices of the separabel structure:
 Note: Fixed random seed.
 """
-function generate_random_states(d_range,r_range,seed = 343)
-
+function generate_random_states(d_range = 2:4,r_range = 2:9,seed = 343)
     ρᵈʳ = Dict()
     for  d in d_range
         for r in r_range
@@ -71,25 +70,25 @@ function get_sep_example(d)
     ρ = Dict()
     ## Separable: http://arxiv.org/abs/1210.0111v2 Table I
     # |00><00| + |11><11|
-    ρ["r1"] = psep(1,1,d) + psep(2,2,d)
+    ρ[d,2,"s"] = psep(1,1,d) + psep(2,2,d)
 
     # http://arxiv.org/abs/1210.0111v2 Table II
     # |00><00| + |11><11| + |12><12|
-    ρ["r2"] = psep(1,1,d) + psep(2,2,d) + psep(2,3,d)
+    ρ[d,3,"s"] = psep(1,1,d) + psep(2,2,d) + psep(2,3,d)
 
     # http://arxiv.org/abs/1210.0111v2 Table II
     # |00><00| + |01><01| + |11><11| + |12><12|
-    ρ["r3"] = psep(1,1,d) + psep(1,2,d) + psep(2,2,d) + psep(2,3,d)
+    ρ[d,4,"s"] = psep(1,1,d) + psep(1,2,d) + psep(2,2,d) + psep(2,3,d)
 
     #  http://arxiv.org/abs/1210.0111v2  Example 13
     # = |00><00| + |02><02| + 2|11><11| + (|01> + |10>)(|01> + <10|)
     ψ₀₁ = ψ(1,2,d)
     ψ₁₀ = ψ(2,1,d)
-    ρ["r4"] = psep(1,1,d) + psep(1,3,d) + 2*psep(2,2,d) + sq(ψ₀₁ + ψ₁₀)
+    ρ[d,5,"s"] = psep(1,1,d) + psep(1,3,d) + 2*psep(2,2,d) + sq(ψ₀₁ + ψ₁₀)
 
     # http://arxiv.org/abs/1210.0111v2 Table II
     # |00><00| + |01><01| + |02><02| + |11><11| + |12><12|
-    ρ["r5"] =  psep(1,1,d) + psep(1,2,d) +  psep(1,3,d) + psep(2,2,d) + psep(2,3,d)
+    ρ[d,5,"s"] =  psep(1,1,d) + psep(1,2,d) +  psep(1,3,d) + psep(2,2,d) + psep(2,3,d)
 
     return ρ
 end
@@ -99,6 +98,7 @@ end
 Entangled state examples:
 """
 function get_ent_example(d)
+    ρ = Dict()
     ## Entangled states examples
     # Example 1: https://en.wikipedia.org/wiki/Quantum_entanglement
     # ρ = (1/sqrt(2))*(e₀*transpose(e₁) - e₁*transpose(e₀))
@@ -106,20 +106,20 @@ function get_ent_example(d)
     # Example 1:  http://arxiv.org/abs/1210.0111v2 Table I
     # |00><00| + |11><11| + |01><10| (TODO Double Check this)
     ψₑₑ = ψ(d)
-    ρ["e1"] = psep(1,1,d) + psep(2,2,d) + sq(ψₑₑ)
+    ρ[d,"e1"] = psep(1,1,d) + psep(2,2,d) + sq(ψₑₑ)
 
     # Example 2: http://arxiv.org/abs/quant-ph/9605038v2  page 9 eq. (22)
     a  = 0.5; b = 0.8; # arbitary possitive numbers
     p  = rand()
     ψ₁ = a*ψ(2,2,d) + b*ψ(1,1,d)
     ψ₂ = a*ψ(2,1,d) + b*ψ(1,2,d)
-    ρ["e2"] = p*sq(ψ₁) + (1 - p)*sq(ψ₂)
+    ρ[d,"e2"] = p*sq(ψ₁) + (1 - p)*sq(ψ₂)
 
     # Example 3: http://arxiv.org/abs/quant-ph/9605038v2  page 10 eq. (25)
     a =  1/sqrt(2) ; p = rand();
     ψₐ = a*(ψ(1,2,d) - ψ(2,1,d))
-    ρ["e3"] = p*sq(ψₐ) + (1 - p)*psep(1,1,d)
-
+    ρ[d,"e3"] = p*sq(ψₐ) + (1 - p)*psep(1,1,d)
+    return ρ
 end
 
 

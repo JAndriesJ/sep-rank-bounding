@@ -8,7 +8,7 @@ include(sourceDir*"compute.jl")
 using .Examples
 using .sep_model
 using .compute
-
+using JuMP
 # using StringDistances
 # using CSV
 
@@ -18,19 +18,20 @@ export run_batch
 function run_batch(t::Int,ρ_dict,save_file)
     con_list_list = ["S₁","S₂","S₁G","S₂G","S₁wG","S₂wG"] #
     # bounds_array = Dict()
-    touch(pwd()*"\\$save_file bounds.txt")
+    file_loc = pwd()*"\\$save_file bounds.txt"
+    touch(file_loc)
     for con in con_list_list
         # bounds_array[con] = Dict()
         for key in keys(ρ_dict)
             ρ = ρ_dict[key]
             sep_mod = Modelξₜˢᵉᵖ(ρ,t,key[1], con)
-            ov =  Computeξₜˢᵉᵖ(sep_mod)
-            pstat = primal_status(model)
-            dstat =  dual_status(model)
-            # ov =  objective_value(sep_mod_opt)
+            sep_mod_opt =  Computeξₜˢᵉᵖ(sep_mod)
+            pstat = primal_status(sep_mod_opt)
+            dstat =  dual_status(sep_mod_opt)
+            ov =  objective_value(sep_mod_opt)
             # con_ind = findall(con, con_list_list, Levenshtein())[1]
             # bounds_array[con][key...] = ov
-            open("C:\\Users\\andries\\all-my-codes\\ju-sep-rank\\bounds.txt","a") do io
+            open(file_loc,"a") do io
                 write(io, con*",$key,$pstat,$dstat,$ov \n")
             end
         end

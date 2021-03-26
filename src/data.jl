@@ -93,7 +93,10 @@ function get_sep_example(d = 3)
     # |00><00| + |01><01| + |02><02| + |11><11| + |12><12|
     ρ[d,5,"s"] =  psep(1,1,d) + psep(1,2,d) +  psep(1,3,d) + psep(2,2,d) + psep(2,3,d)
 
-    return maketraceone(ρ)
+    for key in keys(ρ)
+        ρ[key] = maketraceone(ρ[key])
+    end
+    return ρ
 end
 
 
@@ -122,7 +125,11 @@ function get_ent_example(d = 3)
     a =  1/sqrt(2) ; p = rand();
     ψₐ = a*(ψ(1,2,d) - ψ(2,1,d))
     ρ[d,"e3"] = p*sq(ψₐ) + (1 - p)*psep(1,1,d)
-    return maketraceone(ρ)
+
+    for key in keys(ρ)
+        ρ[key] = maketraceone(ρ[key])
+    end
+    return ρ
 end
 
 

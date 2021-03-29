@@ -23,16 +23,24 @@ function run_batch(t::Int,ρ_dict,save_file)
     for con in con_list_list
         # bounds_array[con] = Dict()
         for key in keys(ρ_dict)
-            ρ = ρ_dict[key]
-            sep_mod = Modelξₜˢᵉᵖ(ρ,t,key[1], con)
-            sep_mod_opt =  Computeξₜˢᵉᵖ(sep_mod)
-            pstat = primal_status(sep_mod_opt)
-            dstat =  dual_status(sep_mod_opt)
-            ov =  objective_value(sep_mod_opt)
-            # con_ind = findall(con, con_list_list, Levenshtein())[1]
-            # bounds_array[con][key...] = ov
-            open(file_loc,"a") do io
-                write(io, con*",$key,$pstat,$dstat,$ov \n")
+            try
+                ρ = ρ_dict[key]
+                sep_mod = Modelξₜˢᵉᵖ(ρ,t,key[1], con)
+                sep_mod_opt =  Computeξₜˢᵉᵖ(sep_mod)
+                pstat = primal_status(sep_mod_opt)
+                dstat =  dual_status(sep_mod_opt)
+                ov =  objective_value(sep_mod_opt)
+
+                open(file_loc,"a") do io
+                    write(io, con*",$key,$pstat,$dstat,$ov \n")
+                    # write(io, con*",$key,test \n")
+                end
+
+            catch err
+                open(file_loc,"a") do io
+                    write(io, con*",$key, Error,Error,Nan, \n")
+                    # write(io, con*",$key,test \n")
+                end
             end
         end
 

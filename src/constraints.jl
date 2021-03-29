@@ -48,7 +48,7 @@ end
 L ≥ 0 on M₂ₜ(S_ρ²)
 ⟺
 L(g⋅[x,y]ₜ₋₁[x,y]ₜ₋₁ᵀ) ⪰ 0 for
-g ∈ √(Tr(ρ)) - ∑xᵢ² , √(Tr(ρ)) - ∑yᵢ²
+g = √(Tr(ρ)) - ∑xᵢ² , √(Tr(ρ)) - ∑yᵢ²
 """
 function make_loc_cons_var_1(ρ,t::Int64,d::Int64,Lx)
     n       = 2*d
@@ -78,6 +78,8 @@ sqrt(∑yᵢ²) == 1
 function make_loc_cons_var_2(ρ,t::Int64,d::Int64,Lx)
     error("This one is a bit different because of the equality constraint.")
 end
+
+
 """
 Input: A(data matrix),t(Integer),Lx(JuMP variable)
 Output: L((ρ - ([x,y]₌₁[x,y]₌₁ᵀ)) ⊗ ([x,y]₌ₗ[x,y]₌ₗᵀ)))for l ∈ 1,...,t-2.

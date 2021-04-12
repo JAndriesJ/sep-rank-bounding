@@ -1,5 +1,5 @@
 module testExamples
-include(pwd()*"\\src\\data.jl")
+include(pwd()*"\\src\\Examples.jl")
 using .Examples
 import Test
 
@@ -38,7 +38,25 @@ end
 end
 
 @testset "lit example sep states" begin
-    get_sep_example(d)
+    sep_examples = Examples.get_sep_example("tr")
+
+
+    for key in keys(sep_examples)
+        ρ = sep_examples[key]
+        @test ishermitian(ρ)
+        d = Int(sqrt(size(ρ)[1]))
+        ρ_1  =  Examples.partial_transpose_per(ρ, 1, [d,d])
+        @test ishermitian(ρ_1)
+        ρ_2  =  Examples.partial_transpose_per(ρ, 2, [d,d])
+        @test ishermitian(ρ_2)
+    end
+
+    H_1 = sep_examples[2, 4, "sep6"]
+    λ₁ = λ₂ = 42 ;
+    u¹₁ = u²₂ = [sqrt(14)/14, sqrt(14)/7, 3/sqrt(14)] ;
+    u²₁ = u¹₂ = [sqrt(3)/3, sqrt(3)/3, sqrt(3)/3] ;
+    H_2 = λ₁ * kron(u¹₁ *transpose(u¹₁) , u²₁*transpose(u²₁))  + λ₂ * kron(u¹₂ *transpose(u¹₂), u²₂*transpose(u²₂))
+    @test H_1 == H_2
 end
 
 @testset "lit example ent states" begin

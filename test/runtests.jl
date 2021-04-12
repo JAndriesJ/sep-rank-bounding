@@ -1,19 +1,15 @@
-# include("ju-sep-rank.jl")
-module runtests
-include(pwd()*"\\test\\testMoments.jl")
+# module runtests
+sep_rank_proj_path = dirname(dirname(@__FILE__))
+Pkg.activate(sep_rank_proj_path)
+
+testDir = dirname(@__FILE__)
+# include(testDir*"\\testUtils.jl")
+# include(testDir*"\\testMoments.jl")
+# include(testDir*"\\testSep_Constriants.jl")
+include(testDir*"\\testSep_Model.jl")
+include(testDir*"\\testSep_Compute.jl")
 
 
-# using .seprank
-# using Test
-#
-# @testset "moments.jl" begin
-#     # Write your tests here.
+
+
 # end
-
-
-# include("C:\\Users\\andries\\all-my-codes\\ju-sep-rank\\test\\runtests.jl")
-
-
-
-
-end

@@ -1,5 +1,0 @@
-module testConstraints
-
-
-
-end

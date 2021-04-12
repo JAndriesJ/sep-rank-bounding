@@ -1,14 +1,28 @@
-module moments
+module Moments
+
 using LinearAlgebra
 
-export make_mon_expo_arr,
-       make_mon_expo,
-       get_std_base_vec,
+srcDir = dirname(@__FILE__)
+include(srcDir*"\\Utils.jl")
+using .Utils
+
+export prop_zero_diags,
        make_mon_expo_mat,
        make_xxᵀ_tens_yyᵀ,
-       make_mom_expo_keys,
-       assemble_dict,
-       var_kron
+       make_mom_expo_keys
+
+       # assemble_dict,
+       # make_mon_expo_arr,
+       # make_mon_expo,
+
+"""
+Input: ρ with possible zeros on the diagonal.
+Output: ρ with rows/cols corresponding to zeros diagonals deleted.
+"""
+function prop_zero_diags(ρ)
+    maks = findall(iszero.(diag(ρ)))
+    return ρ[setdiff(1:end,maks), setdiff(1:end,maks)]
+end
 
 
 """
@@ -41,17 +55,6 @@ function make_mon_expo(n::Int,t::Int, isLeq::Bool = true)
     return mon_expo
 end
 
-
-"""
-output: eₖ ∈ {0,1}ⁿ i.e. the standard basis vector
-"""
-function get_std_base_vec(n::Int,k::Int)
-    @assert n >= k
-    eₖ = zeros(Int64,n)
-    eₖ[k] = 1
-    return eₖ
-end
-
 """
 output: exponents α ∈ Nⁿₜ of [x]≦ₜ[x]≦ₜᵀ or [x]₌ₜ[x]₌ₜᵀ where , x = (x₁,x₂,...,xₙ)
 """
@@ -63,9 +66,22 @@ function make_mon_expo_mat(n::Int,t::Tuple{Int64,Int64},isLeq::Bool = true)
     mon1_mon2ᵀₜ    = reshape(mon1_mon2ᵀₜ_vec, (length(mon1), length(mon2)) )
     return mon1_mon2ᵀₜ
 end
+
 function make_mon_expo_mat(n::Int,t::Int,isLeq::Bool = true)
     xxᵀₜ     = make_mon_expo_mat(n,(t,t),isLeq)
     return xxᵀₜ
+end
+
+function make_mon_expo_mat(n::Int,t::Int,ρ, isLeq::Bool = true)
+    d = Int(n/2)
+    z_dags             = iszero.(diag(ρ))
+    zero_diag          = diag(make_xxᵀ_tens_yyᵀ(d))[z_dags]
+
+    mon_expo_mat       = make_mon_expo_mat(n,t,isLeq)
+    row_col_purge_list = [ mom in zero_diag   for mom in diag(mon_expo_mat)]
+    row_col_keep_list  = setdiff(1:size(mon_expo_mat)[1], findall(row_col_purge_list))
+
+    return mon_expo_mat[row_col_keep_list, row_col_keep_list]
 end
 
 """
@@ -80,9 +96,14 @@ function make_xxᵀ_tens_yyᵀ(d::Int64)
     xxᵀ_expo = x .+ reshape(x,1,d)
     yyᵀ_expo = y .+ reshape(y,1,d)
 
-    var_kron(xxᵀ_expo,yyᵀ_expo)
+    Utils.var_kron(xxᵀ_expo,yyᵀ_expo)
 end
 
+function make_xxᵀ_tens_yyᵀ(d::Int64,ρ)
+    xxᵀ_tens_yyᵀ = make_xxᵀ_tens_yyᵀ(d)
+    maks = findall(iszero.(diag(ρ)))
+    return  xxᵀ_tens_yyᵀ[setdiff(1:end,maks), setdiff(1:end,maks)]
+end
 
 """
 output: array: unique exponents in [x]≦ₜ[x]≦ₜᵀ γ ∈ N_2t^n, values are indeces in
@@ -93,53 +114,6 @@ function make_mom_expo_keys(n::Int,t::Int)
     return unique( [ α + β for α in mon_vec, β in mon_vec ])
 end
 
-"""
-input: Dictionary:
-    keys: i,j ∈ [n], n::Int
-    values: square array A_{i,j}
-output: Array A = (A_{i,j})_i,j
-"""
-function assemble_dict(dict_of_blocks)
-    n = Int(sqrt(length(keys(dict_of_blocks))))
-    if n == 1
-        return dict_of_blocks[1,1]
-    end
-    block = []
-    row_block = []
-    for i in 1:n
-        for j in 1:n
-            if j == 1
-                row_block = dict_of_blocks[i, j]
-            else
-                row_block = hcat(row_block, dict_of_blocks[i,j])
-            end
-        end
-
-        if i == 1
-            block = row_block
-        elseif i > 1
-            block = vcat(block, row_block)
-        end
-
-    end
-    return block
-end
-
-"""
-input: A,B (arrays of integer tupples)
-output: exponent array of A ⊗ B
-"""
-function var_kron(A,B)
-    n1,n2 = size(A)
-
-    D = Dict()
-    for i in 1:n1
-        for j in 1:n2
-            C = repeat( [A[i,j]] , inner = (1,1), outer = size(B))
-            D[i,j] = C + B
-        end
-    end
-    return assemble_dict(D)
-end
+# make_mom_expo_keys(n::Int,t::Int,ρ) = unique(vec(make_mon_expo_mat(n,t,ρ)))
 
 end

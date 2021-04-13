@@ -12,6 +12,7 @@ MosekTools = "1ec41992-ff65-5c91-ac43-2df89e9693a4"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
+CSV = "0.8"
 julia = "1"
 
 [extras]

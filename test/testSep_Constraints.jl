@@ -91,4 +91,24 @@ const t = 3
 end
 
 
+# ρ_dict = Examples.get_examples()
+# ρ_sep  = ρ_dict["sep"]
+# ρ = ρ_sep["sep1d2r2"]
+# t = 3
+# con_list = "S₁sGwG"
+# d =  Int(sqrt(size(ρ)[1]))
+# n = 2*d
+# model = Model()
+# list_of_keys = Moments.make_mom_expo_keys(n,t) # Define variables in the moment matrix.
+# @variable(model, Lx[list_of_keys] ) # ????
+#
+#
+# cons_S₁    = sep_Constraints.make_loc_cons_S₁(ρ,t,Lx)
+# cons_S₂    = sep_Constraints.make_loc_cons_S₂(ρ,t,Lx)
+# cons_S₃,g₂ = sep_Constraints.make_loc_cons_S₃(ρ,t,Lx)
+#
+# weakG_con = sep_Constraints.make_weakG_con(ρ,t,Lx)
+# G_con     = sep_Constraints.make_G_con(ρ,t,Lx)
+
+
 end

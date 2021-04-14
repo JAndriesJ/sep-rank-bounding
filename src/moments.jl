@@ -8,6 +8,7 @@ using .Utils
 
 export prop_zero_diags,
        make_mon_expo_mat,
+       make_mon_expo_mat_perm,
        make_xxᵀ_tens_yyᵀ,
        make_mom_expo_keys
 
@@ -72,7 +73,7 @@ function make_mon_expo_mat(n::Int,t::Int,isLeq::Bool = true)
     return xxᵀₜ
 end
 
-function make_mon_expo_mat(n::Int,t::Int,ρ, isLeq::Bool = true)
+function make_mon_expo_mat(n::Int,t::Int,ρ::Array{Float64,2}, isLeq::Bool = true)
     d = Int(n/2)
     z_dags             = iszero.(diag(ρ))
     zero_diag          = diag(make_xxᵀ_tens_yyᵀ(d))[z_dags]
@@ -83,6 +84,43 @@ function make_mon_expo_mat(n::Int,t::Int,ρ, isLeq::Bool = true)
 
     return mon_expo_mat[row_col_keep_list, row_col_keep_list]
 end
+
+
+function make_mon_expo_mat_perm(n::Int,t::Int,isLeq::Bool = true)
+    mon_expo_mat = make_mon_expo_mat(n,t,isLeq)
+    even_sub_mats = get_even_sub_mats(mon_expo_mat)
+
+    return even_sub_mats
+end
+
+"""
+Return the 4 principle submatrices of the momentmatrix that have "even bi-powers"
+i.e all moments xᵃ⁺ᶜyᵇ⁺ᵈ where |a+c|,|b+d| ∈ 2N
+"""
+function get_even_sub_mats(mom_matₜ_expo)
+    mom_vecₜ_expo = mom_matₜ_expo[1,:]
+    halfsum(arr) = [sum(arr[1:Int(length(arr)/2)]),sum(arr[Int(length(arr)/2)+1:end])]
+    isoddd(p) = isodd(p[1]),isodd(p[2])
+
+    isevev(pair) = pair == (false,false)
+    isodod(pair) = pair == (true,true)
+    isevod(pair) = pair == (false,true)
+    isodev(pair) = pair == (true,false)
+
+    select_first(p) = p[1]
+    evev = select_first.(findall(isevev.(isoddd.(halfsum.(mom_vecₜ_expo)))))
+    odod = select_first.(findall(isodod.(isoddd.(halfsum.(mom_vecₜ_expo)))))
+    evod = select_first.(findall(isevod.(isoddd.(halfsum.(mom_vecₜ_expo)))))
+    odev = select_first.(findall(isodev.(isoddd.(halfsum.(mom_vecₜ_expo)))))
+
+    even_sub_mats = Dict("evev" => mom_matₜ_expo[evev,evev],
+                         "odod" => mom_matₜ_expo[odod,odod],
+                         "evod" => mom_matₜ_expo[evod,evod],
+                         "odev" => mom_matₜ_expo[odev,odev])
+    return even_sub_mats
+end
+
+
 
 """
 returns the exponents of xxᵀ⊗yyᵀ

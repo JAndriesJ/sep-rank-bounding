@@ -14,7 +14,7 @@ using .sep_Compute
     @test result_count(sep_mod_opt) == 1
     @test string(primal_status(sep_mod_opt)) == "FEASIBLE_POINT"
     @test string(dual_status(sep_mod_opt)) == "FEASIBLE_POINT"
-    @test objective_value(sep_mod_opt) == 2.828427006418139
+    @test (objective_value(sep_mod_opt) - 2.828427006418139) < 0.0000001
 end
 
 # Lx = sep_mod_opt[:Lx]

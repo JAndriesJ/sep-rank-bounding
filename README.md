@@ -1,4 +1,5 @@
 # ju-sep-rank
+***Important note the code seems only to work in my global environment and not the local one. I have no idea why and will investigate further.***
 
 ##  Code Overview:
   - ***Utils.jl***:
@@ -14,8 +15,36 @@
 
 
 ## Getting started:
+```
+sep_rank_proj_path = dirname(dirname(@__FILE__))
+sourceDir = sep_rank_proj_path*"\\src\\"
+testDir   = sep_rank_proj_path*"\\test\\"
+for mod in ["Examples","sep_Model","sep_Compute"]#, "Moments", "sep_Constraints"]
+    include(sourceDir*mod*".jl")
+end
+using .Examples
+using .sep_Model
+using .sep_Compute
+
+# include(testDir*"runTests.jl")
+
+ρ_dict = Examples.get_examples()
+ρ_sep  = ρ_dict["sep"]
+ρ            = ρ_sep["sep4d3r4"]
+t            = 2
+con_list     = "S₁"
 
 
+sep_mod      = sep_Model.Modelξₜˢᵉᵖ(ρ,t,con_list)
+sep_mod_opt  = sep_Compute.Computeξₜˢᵉᵖ(sep_mod)
+Lx_vals = values.(sep_mod_opt[:Lx])
+mom_mat_vals = sep_Compute.rec_mom_mat(Lx_vals)
+# For running a batch
+
+boundsDir = pwd()*"\\bounds\\"
+sep_Model.batch_model(t,ρ_sep,boundsDir)
+mass_read_comp(boundsDir)
+```
 
 ## Theory:
 The goal is to compute a lower bound for the separable rank of a density matrix representing a quantum mechanical state.

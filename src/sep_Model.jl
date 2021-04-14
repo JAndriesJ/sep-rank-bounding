@@ -27,38 +27,64 @@ function Modelξₜˢᵉᵖ(ρ,t,con_list)
     list_of_keys = make_mom_expo_keys(n,t) # Define variables in the moment matrix.
     @variable(model, Lx[list_of_keys] ) # ????
  # Build the moment matrix and constrain it to be PSD: L([x,y]≦ₜᵀ[x,y]≦ₜ) ⪰ 0 (doubble check this!!!!!!)
-    mom_matₜ_expo = make_mon_expo_mat(n,t,ρ,true)
-    mom_matₜ      = Utils.index_to_var(Lx, mom_matₜ_expo)
-    @constraint(model, Symmetric(mom_matₜ) in PSDCone())
+    mom_matₜ_expo = make_mon_expo_mat_perm(n,t,true)
+    for key in keys(mom_matₜ_expo)
+        if isempty(mom_matₜ_expo[key])
+            continue
+        end
+        mom_matₜ      = Utils.index_to_var(Lx, mom_matₜ_expo[key])
+        @constraint(model, Symmetric(mom_matₜ) in PSDCone())
+    end
  # Fourth order Moment constraints: L(xxᵀ ⊗ yyᵀ) = ρ,
     xxᵀ_tens_yyᵀ    = make_xxᵀ_tens_yyᵀ(d,ρ)
     L_xxᵀ_tens_yyᵀ  = Utils.index_to_var(Lx,xxᵀ_tens_yyᵀ)
     @constraint(model, fix_con,L_xxᵀ_tens_yyᵀ .==  prop_zero_diags(ρ))
  # Localizing g constraint: L ≥ 0 on M₂ₜ(S)
     if occursin("S₁",con_list)
-        loc_con = make_loc_cons_S₁(ρ,t,d,Lx)
+        loc_con = make_loc_cons_S₁(ρ,t,Lx)
     elseif occursin("S₂",con_list)
-        loc_con = make_loc_cons_S₂(ρ,t,d,Lx)
+        loc_con = make_loc_cons_S₂(ρ,t,Lx)
     elseif occursin("S₃",con_list)
-        loc_con, g₂  =  make_loc_cons_S₃(ρ,t,d,Lx)
-        @constraint(model, fix_S₃_con, g₂ .==  zeros(size(g₂)))
+        loc_con, g₂  =  make_loc_cons_S₃(ρ,t,Lx)
+        for key in keys(g₂)
+            @constraint(model, g₂[key] .==  zeros(size(g₂[key])))
+        end
     end
     for key in keys(loc_con)
-        @constraint(model, Symmetric(loc_con[key]) in PSDCone())
+        if isempty(loc_con[key])
+            continue
+        end
+        if size(loc_con[key]) == (1, 1)
+            @constraint(model, loc_con[key] .>= 0)
+        else
+            @constraint(model, Symmetric(loc_con[key]) in PSDCone())
+        end
     end
  # weak G Constraints
     if occursin("wG",con_list)
         println("----------------Weak G-constraints are active")
-        weakG_con = make_weakG_con(ρ,t,d,Lx)
+        weakG_con = make_weakG_con(ρ,t,Lx)
         for key in keys(weakG_con)
-           @constraint(model, Symmetric(weakG_con[key]) in PSDCone())
+            if isempty(weakG_con[key])
+                continue
+            end
+            if size(weakG_con[key]) == (1, 1)
+                @constraint(model, weakG_con[key] .>= 0)
+            else
+                @constraint(model, Symmetric(weakG_con[key]) in PSDCone())
+            end
         end
     end
  # G Constraints
     if  occursin("sG",con_list)
         println("----------------G-constraints are active")
-        G_con                 = make_G_con(ρ,t,d,Lx)
-        @constraint(model, Symmetric(G_con) in PSDCone())
+        G_con                 = make_G_con(ρ,t,Lx)
+        for key in keys(G_con)
+            if isempty(G_con[key])
+                continue
+            end
+            @constraint(model, Symmetric(G_con[key]) in PSDCone())
+        end
     end
  #  Set objective
     @objective(model, Min, Lx[zeros(n)])
@@ -77,7 +103,7 @@ function batch_model(t::Int,ρ_dict,save_dir, con_list_list = ["S₁","S₂","S�
     for key in keys(ρ_dict)
         ρ = ρ_dict[key]
         for con in con_list_list
-            sep_mod = Modelξₜˢᵉᵖ(ρ,t, con)
+            sep_mod = Modelξₜˢᵉᵖ(ρ,t,con)
 
             save_name = key*"_"*con*".dat-s"
             save_path = save_dir*save_name

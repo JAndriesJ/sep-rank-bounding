@@ -6,18 +6,17 @@ using DataFrames
 export eᵢ,
        var_kron,
        index_to_var,
-       post_proc
+       post_proc,
+       maketraceone,
+       take_Pᵀ,
+       isPPᵀ
 
-"""
-output: eₖ ∈ {0,1}ⁿ i.e. the standard basis vector
-"""
+"""output: eₖ ∈ {0,1}ⁿ i.e. the standard basis vector """
 eᵢ(n::Int,i::Int) = [j==i for j in 1:n]
-# function get_std_base_vec(n::Int,k::Int)
-#     @assert n >= k
-#     eₖ = zeros(Int64,n)
-#     eₖ[k] = 1
-#     return eₖ
-# end
+
+"""Makes the trace equal to one via scaling"""
+maketraceone(ρ) = ρ/tr(ρ)
+
 
 """
 input: Dictionary:
@@ -80,6 +79,45 @@ function index_to_var(var, index_array)
     return var_array
 end
 
+"""
+Returns the partial transpose of the sysemt.
+Usage: partial_transpose_per(x ∈ ℝᵈˣᵈ, sys ∈ 1,2,...,m , dims = [d₁,d₂,...,dₘ])
+"""
+function take_Pᵀ(x, sys, dims)
+	  n = length(dims)
+	  d = prod(dims)
+	  s = n - sys + 1
+	  p = collect(1:2n)
+	  p[s] = n + s
+	  p[n + s] = s
+	  rdims = reverse(dims)
+	  r = reshape(x, (rdims..., rdims...))
+	  return reshape(permutedims(r,p),(d,d))
+end
+
+"""
+Checks if a sysetem is a PPT via checking if the smallest eigenvalues > -1.e-16
+"""
+function isPPᵀ(x,dims)
+    for  sys ∈ length(dims)
+        is_PPT = eigvals(Examples.partial_transpose_per(x,sys,dims))[1] > -1.e-16
+        if ~is_PPT
+            return false
+        end
+    return true
+end
+
+
+
+
+
+
+
+
+
+
+
+
 ## Post proccessing
 
 function proc_csv(csv_path)
@@ -127,12 +165,13 @@ function make_ordered_ov_list(df_dict)
                     push!(ov_list[ex],"r-INF.c")
                 end
             else
-                push!(ov_list[ex],"U.R.S")
+                push!(ov_list[ex],"U.R.S.")
             end
         end
     end
     return ov_list
 end
+
 
 function post_proc(csv_path)
     df      = proc_csv(csv_path)
@@ -155,22 +194,22 @@ end
 
 
 
-function factorize(number, primes = (2,3,5,7,11,13,17,19,23, 27, 31))
-    factor = Int64[]
-    for p in primes
-        while number % p == 0
-            push!(factor, p)
-            number = number ÷ p
-        end
-        if number == 1
-            break
-        end
-    end
-    if number > 1
-        @warn "factorization failed, not enough primes passed; printing only factors found in primes vector"
-    end
-    return factor
-end
+# function factorize(number, primes = (2,3,5,7,11,13,17,19,23, 27, 31))
+#     factor = Int64[]
+#     for p in primes
+#         while number % p == 0
+#             push!(factor, p)
+#             number = number ÷ p
+#         end
+#         if number == 1
+#             break
+#         end
+#     end
+#     if number > 1
+#         @warn "factorization failed, not enough primes passed; printing only factors found in primes vector"
+#     end
+#     return factor
+# end
 
 # @assert factorize(95) == [5,19]
 

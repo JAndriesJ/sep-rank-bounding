@@ -18,7 +18,7 @@ export make_loc_cons_S₁,
 """
 Simple utility function
 """
-function get_stuff(ρ,t::Int64)
+function extract_data(ρ,t::Int64)
    d       = Int(sqrt(size(ρ)[1]))
    n       = 2*d
    # MB      = Moments.make_mon_expo_mat_perm(n,t-1)
@@ -36,7 +36,7 @@ L(g⋅η) ⪰ 0 for
 g = √(ρₘₐₓ) - xᵢ² , √(ρₘₐₓ) - yᵢ² and i ∈ [d]
 """
 function make_loc_cons_S₁(ρ,t::Int64,Lx)
-    d,n,MB = get_stuff(ρ,t)
+    d,n,MB = extract_data(ρ,t)
     sqr_ρ   = sqrt(maximum(ρ))
     make_loc_con(eᵢ,key) = sqr_ρ*Utils.index_to_var(Lx, MB[key]) - Utils.index_to_var(Lx, MB[key] + repeat([2*eᵢ], size(MB[key])[1], size(MB[key])[1]))
     loc_con = Dict()
@@ -61,7 +61,7 @@ L(g⋅η) ⪰ 0 for
 g = √(Tr(ρ)) - ∑xᵢ² , √(Tr(ρ)) - ∑yᵢ²
 """
 function make_loc_cons_S₂(ρ,t::Int64,Lx)
-    d,n,MB = get_stuff(ρ,t)
+    d,n,MB = extract_data(ρ,t)
     loc_con = Dict()
     for key in keys(MB)
         sqrt_tr_ρ   = sqrt(tr(ρ))
@@ -87,7 +87,7 @@ L((∑yᵢ² - 1)⋅η) = 0
 η ∈ "even-degree"-principle-submatrices of [x,y]ₜ₋₁[x,y]ₜ₋₁ᵀ
 """
 function make_loc_cons_S₃(ρ,t::Int64,Lx)
-    d,n,MB = get_stuff(ρ,t)
+    d,n,MB = extract_data(ρ,t)
     tr_ρ    = tr(ρ)
 
     loc_con = Dict()
@@ -121,8 +121,7 @@ for l ∈ 1,...,t-2.
 η ∈ even-degree-principle-submatrices of ([x,y]₌ₗ[x,y]₌ₗᵀ)
 """
 function make_weakG_con(ρ,t::Int64,Lx)
-    d = Int(sqrt(size(ρ)[1]))
-    n = 2*d
+    d,n,MB = extract_data(ρ,t)
 
     weakG_con = Dict()
     xxᵀ_tens_yyᵀ = Moments.make_xxᵀ_tens_yyᵀ(d)            # exponents of xxᵀ⊗yyᵀ
@@ -152,8 +151,8 @@ or
 η ∈ even-degree-principle-submatrices of ([x,y]₌ₜ₋₂[x,y]₌ₜ₋₂ᵀ)
 """
 function make_G_con(ρ,t::Int64,Lx)
-    d = Int(sqrt(size(ρ)[1]))
-    n = 2*d
+    d,n,MB = extract_data(ρ,t)
+    
     xxᵀ_tens_yyᵀ       = Moments.make_xxᵀ_tens_yyᵀ(d)          # exponents of xxᵀ⊗yyᵀ
     # LMBexpₜ₋₂          = Moments.make_mon_expo_mat_perm(n,t-2,true) # exponents of [x, y]ₜ₋₂[x, y]ᵀₜ₋₂
     LMBexpₜ₋₂          = Moments.make_mon_expo_mat_perm_bootleg(n,t-2,true) # exponents of [x, y]ₜ₋₂[x, y]ᵀₜ₋₂

@@ -74,14 +74,7 @@ end
     mon_expo_mat  = make_mon_expo_mat(n,t,false)
     xxᵀ_tens_yyᵀ  = make_xxᵀ_tens_yyᵀ(d)
 
-    mon_expo_mat_redu  = make_mon_expo_mat(n,t,ρ,false)
-    xxᵀ_tens_yyᵀ_redu  = make_xxᵀ_tens_yyᵀ(d,ρ)
-
     @test size(mon_expo_mat) == (10,10)
-    @test size(mon_expo_mat_redu ) == (8,8)
-
-    @test reshape(xxᵀ_tens_yyᵀ_redu,4) == [[2, 0, 0, 2] , [1, 1, 0, 2], [1, 1, 0, 2] , [0, 2, 0, 2]]
-
 end
 
 # @testset "make_mon_expo_arr" begin

@@ -39,7 +39,7 @@ function mass_read_comp(boundsDir)
     touch(file_loc)
     open(file_loc,"a") do io
         write(io, "|ex|rank|con|Primal|Dual|obj_val|\n")
-        write(io, "|---|---|---|---|---|---|\n")
+        # write(io, "|---|---|---|---|---|---|\n")
     end
     extract_sep_bound_file_meta(s) = s[1:4],s[6],s[8],split(split(s,"_")[end],".")[1]
 

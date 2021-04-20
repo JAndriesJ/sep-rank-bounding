@@ -21,7 +21,9 @@ Simple utility function
 function get_stuff(ρ,t::Int64)
    d       = Int(sqrt(size(ρ)[1]))
    n       = 2*d
-   MB      = Moments.make_mon_expo_mat_perm(n,t-1)
+   # MB      = Moments.make_mon_expo_mat_perm(n,t-1)
+   MB      = Moments.make_mon_expo_mat_perm_bootleg(n,t-1)
+   # MB      = purge_zero_diags(ρ,MB)
    return d,n,MB
 end
 
@@ -81,8 +83,8 @@ end
 L ≥ 0 on M₂ₜ(S_ρ³)
 ⟺
 L((Tr(ρ) - ∑xᵢ²)⋅η) ⪰ 0
-η ∈ even-degree-principle-submatrices of [x,y]ₜ₋₁[x,y]ₜ₋₁ᵀ
-L((sqrt(∑yᵢ²) - 1)⋅[x,y]ₜ₋₁[x,y]ₜ₋₁ᵀ) = 0
+L((∑yᵢ² - 1)⋅η) = 0
+η ∈ "even-degree"-principle-submatrices of [x,y]ₜ₋₁[x,y]ₜ₋₁ᵀ
 """
 function make_loc_cons_S₃(ρ,t::Int64,Lx)
     d,n,MB = get_stuff(ρ,t)
@@ -108,15 +110,15 @@ function make_loc_cons_S₃(ρ,t::Int64,Lx)
 end
 
 
-""" SOMETHING IS WRONG HERE!!!!!
-Input: A(data matrix),t(Integer),Lx(JuMP variable)
+"""
+Input: ρ(data matrix),t(Integer),Lx(JuMP variable)
 Output:
-L((ρ - ([x,y]₌₁[x,y]₌₁ᵀ)) ⊗ ([x,y]₌ₗ[x,y]₌ₗᵀ)))
+L((ρ - xxᵀ⊗yyᵀ) ⊗ η)) ⪰ 0
 for l ∈ 1,...,t-2.
-
-= ρ⊗L([x,y]₌ₗ[x,y]₌ₗᵀ) - L(([x,y]₌₁[x,y]₌₁ᵀ)⊗([x,y]₌ₗ[x,y]₌ₗᵀ)) ⪰ 0
-note
-
+η ∈ even-degree-principle-submatrices of ([x,y]₌ₗ[x,y]₌ₗᵀ)
+⟺
+ρ⊗L(η) - L((xxᵀ⊗yyᵀ) ⊗ η) ⪰ 0
+η ∈ even-degree-principle-submatrices of ([x,y]₌ₗ[x,y]₌ₗᵀ)
 """
 function make_weakG_con(ρ,t::Int64,Lx)
     d = Int(sqrt(size(ρ)[1]))
@@ -125,29 +127,36 @@ function make_weakG_con(ρ,t::Int64,Lx)
     weakG_con = Dict()
     xxᵀ_tens_yyᵀ = Moments.make_xxᵀ_tens_yyᵀ(d)            # exponents of xxᵀ⊗yyᵀ
     for ℓ in 1:(t-2)
-        LMBexp_ℓ = Moments.make_mon_expo_mat_perm(n,ℓ,false)   # exponents of [x,y]₌ₗ[x,y]₌ₗᵀ
+        # LMBexp_ℓ = Moments.make_mon_expo_mat_perm(n,ℓ,false)   # exponents of [x,y]₌ₗ[x,y]₌ₗᵀ
+        LMBexp_ℓ = Moments.make_mon_expo_mat_perm_bootleg(n,ℓ,false)   # exponents of [x,y]₌ₗ[x,y]₌ₗᵀ
         for key in keys(LMBexp_ℓ)
             LMBexp_1ℓ         = Moments.var_kron(xxᵀ_tens_yyᵀ,LMBexp_ℓ[key])  #  # exponents of  (xxᵀ⊗yyᵀ)⊗([x,y]₌ₗ[x,y]₌ₗᵀ)
             LMB_ℓ             = Utils.index_to_var(Lx,LMBexp_ℓ[key])  # L([x,y]₌ₗ[x,y]₌ₗᵀ)
             Rterm             = Utils.index_to_var(Lx,LMBexp_1ℓ) # L((xxᵀ⊗yyᵀ)⊗([x,y]₌ₗ[x,y]₌ₗᵀ))
 
             Lterm             = kron(ρ,LMB_ℓ)                  # ρ⊗L([x,y]₌ₗ[x,y]₌ₗᵀ)
-            weakG_con[key,ℓ]      = Lterm - Rterm                  # ρ⊗L([x,y]₌ₗ[x,y]₌ₗᵀ) - L((xxᵀ⊗yyᵀ)⊗([x,y]₌ₗ[x,y]₌ₗᵀ)) ⪰ 0, ℓ ∈ ,1,t-deg(G)/2
+            weakG_con[key,ℓ]      = Lterm - Rterm              # ρ⊗L([x,y]₌ₗ[x,y]₌ₗᵀ) - L((xxᵀ⊗yyᵀ)⊗([x,y]₌ₗ[x,y]₌ₗᵀ)) ⪰ 0, ℓ ∈ ,1,t-deg(G)/2
         end
     end
     return weakG_con
 end
 
-"""M(Gρ ⊗ L) ⪰ 0 constraints
+
+"""
+M(Gρ ⊗ L) ⪰ 0 constraints
 Where: Gρ := ρ - xxᵀ⊗yyᵀ
-M(Gρ ⊗ L) = L(Gρ ⊗ [x, y]ₜ₋₂[x, y]ᵀₜ₋₂) ⪰ 0
-output: ρ⊗L([x, y]ₜ₋₂[x, y]ᵀₜ₋₂) - L( (xxᵀ⊗yyᵀ) ⊗ ([x, y]ₜ₋₂[x, y]ᵀₜ₋₂) )
+M(Gρ ⊗ L) = L(Gρ ⊗ η) ⪰ 0
+η ∈ even-degree-principle-submatrices of ([x,y]₌ₜ₋₂[x,y]₌ₜ₋₂ᵀ)
+or
+ρ⊗L(η) - L( (xxᵀ⊗yyᵀ) ⊗ η )⪰ 0
+η ∈ even-degree-principle-submatrices of ([x,y]₌ₜ₋₂[x,y]₌ₜ₋₂ᵀ)
 """
 function make_G_con(ρ,t::Int64,Lx)
     d = Int(sqrt(size(ρ)[1]))
     n = 2*d
     xxᵀ_tens_yyᵀ       = Moments.make_xxᵀ_tens_yyᵀ(d)          # exponents of xxᵀ⊗yyᵀ
-    LMBexpₜ₋₂          = Moments.make_mon_expo_mat_perm(n,t-2,true) # exponents of [x, y]ₜ₋₂[x, y]ᵀₜ₋₂
+    # LMBexpₜ₋₂          = Moments.make_mon_expo_mat_perm(n,t-2,true) # exponents of [x, y]ₜ₋₂[x, y]ᵀₜ₋₂
+    LMBexpₜ₋₂          = Moments.make_mon_expo_mat_perm_bootleg(n,t-2,true) # exponents of [x, y]ₜ₋₂[x, y]ᵀₜ₋₂
     G_con = Dict()
     for key in keys(LMBexpₜ₋₂ )
         LMBₜ₋₂             = Utils.index_to_var(Lx,LMBexpₜ₋₂[key]) # L([x, y]ₜ₋₂[x, y]ᵀₜ₋₂)

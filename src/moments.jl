@@ -6,9 +6,11 @@ srcDir = dirname(@__FILE__)
 include(srcDir*"\\Utils.jl")
 using .Utils
 
-export prop_zero_diags,
+export purge_zero_diags,
+       purge_zero_diags_dic,
        make_mon_expo_mat,
        make_mon_expo_mat_perm,
+       make_mon_expo_mat_perm_bootleg,
        make_xxᵀ_tens_yyᵀ,
        make_mom_expo_keys
 
@@ -20,11 +22,35 @@ export prop_zero_diags,
 Input: ρ with possible zeros on the diagonal.
 Output: ρ with rows/cols corresponding to zeros diagonals deleted.
 """
-function prop_zero_diags(ρ)
+function purge_zero_diags(ρ)
     maks = findall(iszero.(diag(ρ)))
     return ρ[setdiff(1:end,maks), setdiff(1:end,maks)]
 end
 
+function purge_zero_diags(ρ,mon_expo_mat)
+    zero_moms    = get_zero_moms(ρ)
+    diagMoms     = [sign.(mom) for mom in diag(mon_expo_mat)]
+    zero_row_col = findall([dm ∈ zero_moms for dm in diagMoms])
+    return mon_expo_mat[setdiff(1:end, zero_row_col), setdiff(1:end, zero_row_col)]
+end
+
+
+function purge_zero_diags_dic(ρ,mon_expo_mat_dict)
+    for key in keys(mon_expo_mat_dict)
+        mon_expo_mat_dict[key] = purge_zero_diags(ρ,mon_expo_mat_dict[key])
+    end
+    return mon_expo_mat_dict
+end
+
+
+function get_zero_moms(ρ)
+    d = Int(sqrt(size(ρ)[1]))
+    xxᵀ_tens_yyᵀ  = Moments.make_xxᵀ_tens_yyᵀ(d)
+
+    z_dags = findall(iszero.(diag(ρ)))
+    zero_moms_float = diag(xxᵀ_tens_yyᵀ)[z_dags] ./ 2
+    zero_moms = [ Int.(mom) for mom in zero_moms_float]
+end
 
 """
 output: exponents α ∈ Nⁿₜ of [x]≦ₜ of [x]₌ₜ (array of integers)
@@ -92,6 +118,14 @@ function make_mon_expo_mat_perm(n::Int,t::Int,isLeq::Bool = true)
 
     return even_sub_mats
 end
+
+function make_mon_expo_mat_perm_bootleg(n::Int,t::Int,isLeq::Bool = true)
+    mon_expo_mat = make_mon_expo_mat(n,t,isLeq)
+    even_sub_mats = Dict("full" => mon_expo_mat)
+
+    return even_sub_mats
+end
+
 
 """
 Return the 4 principle submatrices of the momentmatrix that have "even bi-powers"

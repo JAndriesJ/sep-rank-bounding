@@ -27,7 +27,8 @@ function Modelξₜˢᵉᵖ(ρ,t,con_list)
     list_of_keys = make_mom_expo_keys(n,t) # Define variables in the moment matrix.
     @variable(model, Lx[list_of_keys] ) # ????
  # Build the moment matrix and constrain it to be PSD: L([x,y]≦ₜᵀ[x,y]≦ₜ) ⪰ 0 (doubble check this!!!!!!)
-    mom_matₜ_expo = make_mon_expo_mat_perm(n,t,true)
+    # mom_matₜ_expo = make_mon_expo_mat_perm(n,t,true)
+    mom_matₜ_expo = make_mon_expo_mat_perm_bootleg(n,t,true)
     for key in keys(mom_matₜ_expo)
         if isempty(mom_matₜ_expo[key])
             continue
@@ -36,9 +37,9 @@ function Modelξₜˢᵉᵖ(ρ,t,con_list)
         @constraint(model, Symmetric(mom_matₜ) in PSDCone())
     end
  # Fourth order Moment constraints: L(xxᵀ ⊗ yyᵀ) = ρ,
-    xxᵀ_tens_yyᵀ    = make_xxᵀ_tens_yyᵀ(d,ρ)
+    xxᵀ_tens_yyᵀ    = make_xxᵀ_tens_yyᵀ(d)
     L_xxᵀ_tens_yyᵀ  = Utils.index_to_var(Lx,xxᵀ_tens_yyᵀ)
-    @constraint(model, fix_con,L_xxᵀ_tens_yyᵀ .==  prop_zero_diags(ρ))
+    @constraint(model, fix_con,L_xxᵀ_tens_yyᵀ .==  ρ)
  # Localizing g constraint: L ≥ 0 on M₂ₜ(S)
     if occursin("S₁",con_list)
         loc_con = make_loc_cons_S₁(ρ,t,Lx)

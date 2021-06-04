@@ -33,5 +33,18 @@ end
     # Need more
 end
 
+@testset "extr_d" begin
+    ex_names = ["BPd₁3d₂3",    "CD1d₁2d₂3",    "CD1d₁2d₂4",    "CD1d₁2d₂5",    "CD2d₁3d₂4",    "CDsep1d₁2d₂2","CDsep2d₁2d₂2",
+    "CDsep3d₁3d₂3","CDsep4d₁3d₂3", "CDsep5d₁3d₂3","DNY1d₁3d₂3",   "DNY2d₁2d₂2",  "HHH1d₁2d₂2",   "HHH2d₁2d₂2",
+    "HKd₁3d₂3",    "Randd₁4d₂4",   "wiki1d₁2d₂2",  "wiki2d₁3d₂3"]
+    ex_nums = [(3, 3),(2, 3),(2, 4),(2, 5),(3, 4),(2, 2),(2, 2),(3, 3),(3, 3),
+               (3, 3),(3, 3),(2, 2),(2, 2),(2, 2),(3, 3),(4, 4),(2, 2),(3, 3)]
+    for ex_ind in 1:length(ex_names)
+        @test  Utils.extr_d(ex_names[ex_ind]) == ex_nums[ex_ind]
+    end
+    # Need more
+end
+
+
 # index_to_var
 end  # module testUtils

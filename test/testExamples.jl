@@ -1,66 +1,48 @@
 module testExamples
-include(pwd()*"\\src\\Examples.jl")
+using LinearAlgebra
+using Test
+
+srcDir = dirname(dirname(@__FILE__))*"\\src\\Examples\\"
+include(srcDir *"Examples_sep.jl")
+include(srcDir *"Examples_ent.jl")
+include(srcDir *"Examples.jl")
+
+using .Examples_sep
+using .Examples_ent
 using .Examples
-import Test
 
-@testset "random sep states" begin
-    d = rand(3:5)
-    r = rand(2:6)
-    ρ_rand = gen_rand_state(d,r,343)
-    @test size(ρ_rand) == (d^2,d^2)
-    @test tr(ρ_rand) == 1
-    @test issymmetric(ρ_rand)
-    @test ishermitian(ρ_rand)
-
-    ρ_rand_batch = generate_random_states()
-    key_samp = rand(keys(ρ_rand_batch),5)
-    for key in key_samp
-        ρ_rand = ρ_rand_batch[key]
-        d = key[1]
-        @test size(ρ_rand) == (d^2,d^2)
-        @test tr(ρ_rand) == 1
-        @test issymmetric(ρ_rand)
-        @test ishermitian(ρ_rand)
-    end
+@testset "Test the separable examples" begin
+    ρ_sep = Dict()
+    ρ_sep["Randd₁4d₂4"]   = Examples_sep.gen_ρ_rand(4, 20)
+    ρ_sep["CDsep1d₁2d₂2"] = Examples_sep.get_ρ_CDsep(1)
+    ρ_sep["CDsep2d₁2d₂2"] = Examples_sep.get_ρ_CDsep(2)
+    ρ_sep["CDsep3d₁3d₂3"] = Examples_sep.get_ρ_CDsep(3)
+    ρ_sep["CDsep4d₁3d₂3"] = Examples_sep.get_ρ_CDsep(4)
+    ρ_sep["CDsep5d₁3d₂3"] = Examples_sep.get_ρ_CDsep(5)
+    ρ_sep["DNY1d₁3d₂3"]   = Examples_sep.get_ρ_DNY1()
+    ρ_sep["HHH1d₁2d₂2"]   = Examples_sep.get_ρ_HHH1(0.5)
 end
 
-@testset "lit example utils" begin
-    i₀ = rand(1:d); i₁ = rand(1:d)
-    e₀ = get_std_base_vec(n,i₀)
-    e₁ = get_std_base_vec(n,i₁)
-    @test ψ(i₀,i₁,d) == kron(e₀,e₁)
-    e = e₀ + e₁
-    @test ψ(d) == kron(e,e)
-
-    sq(ϕ)  ==
-    sqs(ϕ₁,ϕ₂) ==
-    psep(i₀::Int,i₁::Int,n::Int)  ==
+@testset "Test the entangeled examples" begin
+    ρ_ent = Dict()
+    ρ_ent["wiki1d₁2d₂2"] = Examples_ent.get_ρ_wiki(1)
+    ρ_ent["wiki2d₁3d₂3"] = Examples_ent.get_ρ_wiki(2)
+    ρ_ent["HHH1d₁2d₂2"]  = Examples_ent.get_ρ_HHH1(0.75)
+    ρ_ent["HHH2d₁2d₂2"]  = Examples_ent.get_ρ_HHH2(0.75)
+    ρ_ent["DNY2d₁2d₂2"]  = Examples_ent.get_ρ_DNY2()
+    ρ_ent["BPd₁3d₂3"]    = Examples_ent.get_ρ_BP()
+    ρ_ent["HKd₁3d₂3"]    = Examples_ent.get_ρ_HK()
+    ρ_ent["CD1d₁2d₂3"]   = Examples_ent.get_ρ_CD1(3)
+    ρ_ent["CD1d₁2d₂4"]   = Examples_ent.get_ρ_CD1(4)
+    ρ_ent["CD1d₁2d₂5"]   = Examples_ent.get_ρ_CD1(5)
+    ρ_ent["CD2d₁3d₂4"]   = Examples_ent.get_ρ_CD2()
 end
 
-@testset "lit example sep states" begin
-    sep_examples = Examples.get_sep_example("tr")
-
-
-    for key in keys(sep_examples)
-        ρ = sep_examples[key]
-        @test ishermitian(ρ)
-        d = Int(sqrt(size(ρ)[1]))
-        ρ_1  =  Examples.partial_transpose_per(ρ, 1, [d,d])
-        @test ishermitian(ρ_1)
-        ρ_2  =  Examples.partial_transpose_per(ρ, 2, [d,d])
-        @test ishermitian(ρ_2)
-    end
-
-    H_1 = sep_examples[2, 4, "sep6"]
-    λ₁ = λ₂ = 42 ;
-    u¹₁ = u²₂ = [sqrt(14)/14, sqrt(14)/7, 3/sqrt(14)] ;
-    u²₁ = u¹₂ = [sqrt(3)/3, sqrt(3)/3, sqrt(3)/3] ;
-    H_2 = λ₁ * kron(u¹₁ *transpose(u¹₁) , u²₁*transpose(u²₁))  + λ₂ * kron(u¹₂ *transpose(u¹₂), u²₂*transpose(u²₂))
-    @test H_1 == H_2
+@testset "Test the  example tools" begin
+    ρ = Examples.get_examples()
+    dfρ = Examples.get_example_overview()
+    println(dfρ)
 end
 
-@testset "lit example ent states" begin
-    get_ent_example(d)
-end
 
 end

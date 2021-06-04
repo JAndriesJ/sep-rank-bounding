@@ -1,50 +1,33 @@
 # ju-sep-rank
 ***Important note the code seems only to work in my global environment and not the local one. I have no idea why and will investigate further.***
 
-##  Code Overview:
-  - ***Utils.jl***:
-    - sd
-  - ***Examples.jl*** :
-    - Returns inbuilt examples for which the separable rank was computed.
-  - ***Moments.jl*** :
-    - Various...
-  - ***sep_Constraints.jl*** :
-    - The constriants of the optimization problem.
-  - ***sep_Compute.jl*** :
-    - The computation script
+##  File dependencies:
+
+```mermaid
+graph TD;
+
+Utils_ex.jl --> Examples.jl;
+Utils_mom.jl --> Moments.jl;
+Utils_cons.jl  --> sep_Constriants.jl;
+Utils_pp.jl
+
+Moments.jl --> sep_Constriants.jl;
+Moments.jl --> Model.jl;
+Moments.jl --> Utils_cons.jl;
+
+sep_Constriants.jl  --> Model.jl;
 
 
-## Getting started:
 ```
-sep_rank_proj_path = dirname(dirname(@__FILE__))
-sourceDir = sep_rank_proj_path*"\\src\\"
-testDir   = sep_rank_proj_path*"\\test\\"
-for mod in ["Examples","sep_Model","sep_Compute"]#, "Moments", "sep_Constraints"]
-    include(sourceDir*mod*".jl")
-end
-using .Examples
-using .sep_Model
-using .sep_Compute
 
-# include(testDir*"runTests.jl")
+##  Workflow:
+```mermaid
+graph TD;
 
-ρ_dict = Examples.get_examples()
-ρ_sep  = ρ_dict["sep"]
-ρ            = ρ_sep["sep4d3r4"]
-t            = 2
-con_list     = "S₁"
+Examples.jl --> sep_Model.jl --> Compute.jl;
 
-
-sep_mod      = sep_Model.Modelξₜˢᵉᵖ(ρ,t,con_list)
-sep_mod_opt  = sep_Compute.Computeξₜˢᵉᵖ(sep_mod)
-Lx_vals = values.(sep_mod_opt[:Lx])
-mom_mat_vals = sep_Compute.rec_mom_mat(Lx_vals)
-# For running a batch
-
-boundsDir = pwd()*"\\bounds\\"
-sep_Model.batch_model(t,ρ_sep,boundsDir)
-mass_read_comp(boundsDir)
 ```
+
 
 ## Theory:
 The goal is to compute a lower bound for the separable rank of a density matrix representing a quantum mechanical state.
@@ -52,6 +35,13 @@ The goal is to compute a lower bound for the separable rank of a density matrix 
 - 1. [Qubit-qudit states with positive partial transpose](http://arxiv.org/abs/1210.0111v2)
 - 2. [Separability of Hermitian Tensors and PSD Decompositions](https://arxiv.org/abs/2011.08132v1)
 - 3. [Separability of mixed states: necessary and sufficient conditions](https://arxiv.org/pdf/quant-ph/9605038v2.pdf)
+
+
+## Real variant:
+Assumption: 
+```
+ρ = ∑ʳaᵀa⊗bᵀb with a,b ∈ ℝᵈ
+```
 
 ### Constraints
 #### S₁
@@ -91,151 +81,135 @@ M(Gρ ⊗ L) = L(Gρ ⊗ [x, y]ₜ₋₂[x, y]ᵀₜ₋₂) ⪰ 0
 output: ρ⊗L([x, y]ₜ₋₂[x, y]ᵀₜ₋₂) - L( (xxᵀ⊗yyᵀ) ⊗ ([x, y]ₜ₋₂[x, y]ᵀₜ₋₂) )
 ```
 
-## Example States:
-### Separable states:
-#### Example sep1
-|00><00| + |11><11|
-```
- 1  0  0  0
- 0  0  0  0
- 0  0  0  0
- 0  0  0  1
-```
-
-#### Example sep2
-|00><00| + |11><11| + (|0> + |1>)⊗(|0> + |1>)(<0| + <1|)⊗(<0| + <1|)
-```
- 2  1  1  1
- 1  1  1  1
- 1  1  1  1
- 1  1  1  2
-```
-
-#### Example sep3
-|00><00| + |11><11| + |12><12|
-```
- 1  0  0  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  1  0  0  0  0
- 0  0  0  0  0  1  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
-```
 
 
-#### Example sep4
-|00><00| + |01><01| + |11><11| + |12><12|
+## Complex variant:
+We want to say things about 
 ```
- 1  0  0  0  0  0  0  0  0
- 0  1  0  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  1  0  0  0  0
- 0  0  0  0  0  1  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
-```
+x,x̄ ∈ ℂᵈ¹
+y,ȳ ∈ ℂᵈ²
 
-#### Example sep5
-|00><00| + |01><01| + |02><02| + |11><11| + |12><12|
+[x,x̄,y,ȳ]
+xx̄ᵀ⊗yȳᵀ = xx*⊗yy*
+
+||x||²
 ```
- 1  0  0  0  0  0  0  0  0
- 0  1  0  0  0  0  0  0  0
- 0  0  1  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  1  0  0  0  0
- 0  0  0  0  0  1  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
+Let
+```
+x = uₓ + im vₓ ∈ ℂᵈ¹
+ ̄x = uₓ - im vₓ ∈ ℂᵈ¹
+y = uᵥ + im vᵥ ∈ ℂᵈ²
+ ̄y = uᵥ - im vᵥ ∈ ℂᵈ²
+```
+with 
+```
+uₓ, vₓ ∈ ℝᵈ¹
+uᵥ, vᵥ ∈ ℝᵈ²
+```
+ - `[x,x̄,y,ȳ]` now becomes `[uₓ,vₓ,uᵥ,vᵥ]` since these are real vectors and we can only work with reals.
+ -`||x||² = ||uₓ||² + ||vₓ||² `
+ - xx*⊗yy*  becomes:
+```
+    xx*⊗yy*  = (uₓ + im vₓ)(uₓ - im vₓ)ᵀ ⊗ (uᵥ + im vᵥ)(uᵥ - im vᵥ)ᵀ
+             = ( (Uₓ +  Vₓ) + im (Wₓ - Wₓᵀ)) ⊗ ((Uᵥ +  Vᵥ) + im (Wᵥ - Wᵥᵀ))
+    where:  Uₓ = uₓuₓᵀ , Vₓ = vₓvₓᵀ and Wₓ = vₓuₓᵀ
+```	
+
+So that if ρ = xx*⊗yy* we have
+```	
+real(ρ)  = (Uₓ + Vₓ)⊗(Uᵥ + Vᵥ) - (Wₓ - Wₓᵀ)⊗(Wᵥ - Wᵥᵀ)
+     = Uₓ⊗Uᵥ + Uₓ⊗Vᵥ + Vₓ⊗Uᵥ + Vₓ⊗Vᵥ - (Wₓ⊗Wᵥ - Wₓ⊗Wᵥᵀ - Wₓᵀ⊗Wᵥ + Wₓᵀ⊗Wᵥᵀ)
+
+imag(ρ)  = (Uₓ + Vₓ) ⊗ (Wᵥ - Wᵥᵀ) + (Wₓ - Wₓᵀ) ⊗ (Uᵥ +  Vᵥ)
+     = Uₓ⊗Wᵥ - Uₓ⊗Wᵥᵀ + Vₓ⊗Wᵥ - Vₓ⊗Wᵥᵀ + (Wₓ⊗Uᵥ + Wₓ⊗Vᵥ - Wₓᵀ⊗Uᵥ - Wₓᵀ⊗Vᵥ)
+
 ```
 
 
-#### Example sep6
-Hᵢ₁ᵢ₂ⱼ₁ⱼ₂ = i₁j₁ + i₂j₂ where i₁,j₁,i₂,j₂ in [3]
+### What becomes of the constraints?
+
+#### S₁
 ```
- 2  3   4  3   4   5   4   5   6
- 3  5   7  4   6   8   5   7   9
- 4  7  10  5   8  11   6   9  12
- 3  4   5  5   6   7   7   8   9
- 4  6   8  6   8  10   8  10  12
- 5  8  11  7  10  13   9  12  15
- 4  5   6  7   8   9  10  11  12
- 5  7   9  8  10  12  11  13  15
- 6  9  12  9  12  15  12  15  18
-```
-
-
-### Entangled states:
-
-
-#### Example ent1
-(|01> + |10>)(<01| + <10|)
-```
- 1  0  0  1
- 0  0  0  0
- 0  0  0  0
- 1  0  0  1
+L ≥ 0 on M₂ₜ(S_ρ¹)
+⟺
+L(g⋅[x,x̄,y,ȳ]ₜ₋₁[x,x̄,y,ȳ]ₜ₋₁ᵀ) ⪰ 0 for
+g =
+√(ρₘₐₓ) - xᵢx̄ᵢ , i ∈ [d₁] 
+or
+√(ρₘₐₓ) - yⱼȳⱼ , j ∈ [d₂]
+⟺???
+L(g⋅[uₓ,vₓ,uᵥ,vᵥ]ₜ₋₁[uₓ,vₓ,uᵥ,vᵥ]ₜ₋₁ᵀ) ⪰ 0 for
+g =
+√(ρₘₐₓ) - (uₓᵢ² + vₓᵢ²) , i ∈ [d₁] 
+or
+√(ρₘₐₓ) - (uᵥⱼ² + vᵥⱼ²) , j ∈ [d₂]
 ```
 
-
-
-#### Example ent2
+#### S₂
 ```
-a  = 0.5; b = 0.8; # arbitary possitive numbers
-p  = rand()
-ψ₁ = a*ψ(2,2,2) + b*ψ(1,1,2)
-ψ₂ = a*ψ(2,1,2) + b*ψ(1,2,2)
-ρ[2,"ent2"] = p*sq(ψ₁) + (1 - p)*sq(ψ₂)
-
- 0.479379  0.0       0.0        0.299612
- 0.0       0.160621  0.100388   0.0
- 0.0       0.100388  0.0627425  0.0
- 0.299612  0.0       0.0        0.187258
-```
-
-
-#### Example ent3
-```
-a =  1/sqrt(2) ; p = rand();
-ψₐ = a*(ψ(1,2,2) - ψ(2,1,2))
-p*sq(ψₐ) + (1 - p)*psep(1,1,2)
-
- 0.426205   0.0        0.0       0.0
- 0.0        0.286897  -0.286897  0.0
- 0.0       -0.286897   0.286897  0.0
- 0.0        0.0        0.0       0.0
+L ≥ 0 on M₂ₜ(S_ρ²)
+⟺
+L(g⋅[x,x̄,y,ȳ]ₜ₋₁[x,x̄,y,ȳ]ₜ₋₁ᵀ) ⪰ 0 for
+g = 
+√(Tr(ρ)) - ∑xᵢx̄ᵢ 
+or
+√(Tr(ρ)) - ∑yⱼȳⱼ
+⟺???
+L(g⋅[uₓ,vₓ,uᵥ,vᵥ]ₜ₋₁[uₓ,vₓ,uᵥ,vᵥ]ₜ₋₁ᵀ) ⪰ 0 for
+g = 
+√(Tr(ρ)) - ∑(uₓᵢ² + vₓᵢ²) 
+or
+√(Tr(ρ)) - ∑(uᵥⱼ² + vᵥⱼ²)
 ```
 
-#### Example ent4
-|00><00| + |02><02| + 2|11><11| + (|01> + |10>)(<01| + <10|)
+#### S₃
 ```
- 1  0  0  0  0  0  0  0  0
- 0  1  0  1  0  0  0  0  0
- 0  0  1  0  0  0  0  0  0
- 0  1  0  1  0  0  0  0  0
- 0  0  0  0  2  0  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
- 0  0  0  0  0  0  0  0  0
+L ≥ 0 on M₂ₜ(S_ρ³)
+⟺
+L((Tr(ρ) - ∑xᵢx̄ᵢ)⋅[x,x̄,y,ȳ]ₜ₋₁[x,x̄,y,ȳ]ₜ₋₁ᵀ) ⪰ 0
+L(∑yⱼȳⱼ - 1)⋅[x,x̄,y,ȳ]ₜ₋₁[x,x̄,y,ȳ]ₜ₋₁ᵀ) = 0
+⟺
+L((Tr(ρ) - ∑xᵢx̄ᵢ)⋅[uₓ,vₓ,uᵥ,vᵥ]ₜ₋₁[uₓ,vₓ,uᵥ,vᵥ]ₜ₋₁ᵀ) ⪰ 0
+L(∑(uᵥⱼ² + vᵥⱼ²) - 1)⋅[uₓ,vₓ,uᵥ,vᵥ]ₜ₋₁[uₓ,vₓ,uᵥ,vᵥ]ₜ₋₁ᵀ) = 0
+```
+
+#### wG:
+```
+for l ∈ 1,...,t-2:
+L((ρ - xx*⊗yy*) ⊗ ([x,x̄,y,ȳ]₌ₗ[x,x̄,y,ȳ]₌ₗ*)))
+= ρ⊗L([x,x̄,y,ȳ]₌ₗ[x,x̄,y,ȳ]₌ₗ*) - L(xx*⊗yy*⊗([x,x̄,y,ȳ]₌ₗ[x,x̄,y,ȳ]₌ₗ*)) ⪰ 0
+⟺
+for l ∈ 1,...,t-2:
+L( (real(ρ) - real(xx*⊗yy*)) ⊗ [uₓ,vₓ,uᵥ,vᵥ]ₜ₋₁[uₓ,vₓ,uᵥ,vᵥ]ₜ₋₁ᵀ) ⪰ 0
+L( (imag(ρ) - imag(xx*⊗yy*)) ⊗ [uₓ,vₓ,uᵥ,vᵥ]ₜ₋₁[uₓ,vₓ,uᵥ,vᵥ]ₜ₋₁ᵀ) ⪰ 0
+```
+#### sG:
+```
+M(Gρ ⊗ L) ⪰ 0 constraints
+Where: Gρ := ρ - xx*⊗yy*
+M(Gρ ⊗ L) = L(Gρ ⊗ [x,x̄,y,ȳ]ₜ₋₂[x,x̄,y,ȳ]*ₜ₋₂) ⪰ 0
+⟺
+L( (real(ρ) - real(xx*⊗yy*)) ⊗ [uₓ,vₓ,uᵥ,vᵥ]ₜ₋₂[uₓ,vₓ,uᵥ,vᵥ]ₜ₋₂ᵀ) ⪰ 0
+L( (imag(ρ) - imag(xx*⊗yy*)) ⊗ [uₓ,vₓ,uᵥ,vᵥ]ₜ₋₂[uₓ,vₓ,uᵥ,vᵥ]ₜ₋₂ᵀ) ⪰ 0
+
 ```
 
 
-#### Example ent5  (untested)
-Hᵢ₁ᵢ₂ⱼ₁ⱼ₂ = i₁i₂ + j₁j₂ where i₁,j₁,i₂,j₂ in
-```
-  2   3   4   3   5   7   4   7  10
-  3   4   5   4   6   8   5   8  11
-  4   5   6   5   7   9   6   9  12
-  3   4   5   4   6   8   5   8  11
-  5   6   7   6   8  10   7  10  13
-  7   8   9   8  10  12   9  12  15
-  4   5   6   5   7   9   6   9  12
-  7   8   9   8  10  12   9  12  15
- 10  11  12  11  13  15  12  15  18
-```
+
+### Block diagonalization of the moment matrix:
+As was proven in the paper we may assume that:
+
+
+Which means that `([x,x̄,y,ȳ]₌ₗ[x,x̄,y,ȳ]₌ₗ*)` becomes block diagonal, i.e., ....
+
+
+
+
+
+
+
+
+
+
+
+

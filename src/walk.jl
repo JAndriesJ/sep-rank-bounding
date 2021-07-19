@@ -1,9 +1,11 @@
+dirname(@__FILE__)
+
 ### Begin here
 println("""Initialize project:""")
-    srcDir  = dirname(@__FILE__)*"\\";
+    srcDir  = dirname(@__FILE__)*"\\"
     include(srcDir*"Examples\\Examples.jl")
     include(srcDir*"Examples\\Utils_states.jl")
-    include(srcDir*"Moments\\Moments.jl")
+    include("Moments.jl")
     include(srcDir*"Constraints\\C_constraints.jl")
     include(srcDir*"Constraints\\R_constraints.jl")
     include(srcDir*"Constraints\\Utils_cons.jl")
@@ -12,7 +14,7 @@ println("""Initialize project:""")
     include(srcDir*"Model\\Utils_Model.jl")
     include(srcDir*"sep_Compute.jl")
 
-    using .sep_Compute
+
     using .Examples
     using .Utils_states
     using .Moments

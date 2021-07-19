@@ -2,19 +2,24 @@ module sep_Compute
 
 using MosekTools
 using JuMP
-
-# srcDir = dirname(@__FILE__)*"\\"
-# include(srcDir*"Utils.jl")
-# include(srcDir*"Moments.jl")
-# include(srcDir*"sep_Model.jl")
-# using .Utils
-# using .Moments
-# using .sep_Model
+using LinearAlgebra
 
 
-export Computeξₜˢᵉᵖ
-       # mass_read_comp
-       # rec_mom_mat
+srcDir = dirname(dirname(@__FILE__))*"\\src\\"
+include(srcDir*"Examples\\Examples.jl")
+include(srcDir*"Model\\Utils_Model.jl")
+include(srcDir*"Model\\C_sep_Model.jl")
+include(srcDir*"Model\\R_sep_Model.jl")
+using .Utils_Model
+using .Examples
+using .C_sep_Model
+using .R_sep_Model
+
+export Computeξₜˢᵉᵖ,
+       get_sol_vals,
+       get_sol_min_eigval,
+       batch_Computeξₜˢᵉᵖ,
+       quick_run_spec_example
 
 
 """
@@ -22,7 +27,7 @@ Inpute: Jump model of separability problem.
 Output: MOSEK solution response.
 """
 function Computeξₜˢᵉᵖ(model)
-    set_optimizer(model, Mosek.Optimizer)
+    JuMP.set_optimizer(model, Mosek.Optimizer)
     # optimize
     optimize!(model)
 
@@ -33,45 +38,11 @@ function Computeξₜˢᵉᵖ(model)
     return model
 end
 
-# """ Reads all .dat-s files and computes bounds storing result summary in a .csv file"""
-function mass_read_comp(boundsDir)
-    datsFiles = [file for file in readdir(boundsDir,join = true) if contains(file,".dat-s")]
-    file_loc = boundsDir*"Summary.csv"
-    touch(file_loc)
-    open(file_loc,"a") do io
-        write(io, "|ex|rank|con|Primal|Dual|obj_val|\n")
-    end
-    extract_sep_bound_file_meta(s) = s[1:4],s[6],s[8],split(split(s,"_")[end],".")[1]
-
-    for file in datsFiles
-        mod = C_sep_Model.read_model(file)
-        sep_mod_opt = sep_Compute.Computeξₜˢᵉᵖ(mod)
-
-        ex,d,rank,con   =  extract_sep_bound_file_meta(basename(file))
-
-        pstat = primal_status(sep_mod_opt)
-        dstat = dual_status(sep_mod_opt)
-        ov    = objective_value(sep_mod_opt)
-
-        open(file_loc,"a") do io
-            write(io, "|$ex|$rank|$con|$pstat|$dstat|$ov| \n")
-        end
-    end
-end
+# get_sol_dict(Lx) = Dict(zip(Lx.data,value.(Lx).data))
+get_sol_vals(arr) = JuMP.value.(arr)
+get_sol_min_eigval(arr) = LinearAlgebra.eigmin(JuMP.value.(arr))
 
 
 
-# """
-# Input: The variable list Lx returened by a solver.
-# Output: Moment matrix associated with the solution.
-# """
-# function rec_mom_mat(Lx_vals)
-#     n = length(Lx_vals.axes[1][1])
-#     t = Int(sum(Lx_vals.axes[1][end])/2)
-#     MB_exp  = Moments.make_mon_expo_mat(n,t)
-#     MB      = Utils.index_to_var(Lx_vals, MB_exp)
-#     mom_mat = value.(MB)
-#     return mom_mat
-# end
 
 end

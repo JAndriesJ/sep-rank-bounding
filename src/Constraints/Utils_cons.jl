@@ -1,9 +1,9 @@
 module Utils_cons
 
-export index_to_var,
-       eᵢ,
-       get_Lxx̄ᵀ_tens_yȳᵀ,
-       get_Gℝ
+export eᵢ,
+       idx2var,
+       idx2varxx̄ᵀtyȳᵀ,
+       get_Gᴿ
 
 
 """The standard basis vector eᵢ in dimension n"""
@@ -14,32 +14,40 @@ eᵢ(n::Int,i::Int) = [j==i for j in 1:n]
 Input: Array B of multi-indices: α
 Output: L of x of array of indices: L(x.(B))
  """
-function index_to_var(var, index_array)
-    sub = α -> var[α]
-    var_array = sub.(index_array)
-    return var_array
+
+idx2var(var, index_array) = map(α -> var[α],index_array)
+
+idx2var(var, index_array::Array{Array{Int64,1},2},coef_array) = coef_array .* map(α -> var[α],index_array)
+
+#  idx2var(var, index_dict::Dict{Any,Any},coef_dict::Dict{Any,Any})
+function idx2var(var, index_dict,coef_dict)
+    kl = [keys(coef_dict)...]
+    k_1 = pop!(kl)
+    Res = idx2var(var, index_dict[k_1],coef_dict[k_1])
+    for k in kl
+        Res += idx2var(var, index_dict[k],coef_dict[k])
+    end
+    return Res
 end
 
+
 ## Complex side
-"""Returns L^ℝ(ℜ(xx̄ᵀ⊗yȳᵀ)), L^ℝ(ℑ(xx̄ᵀ⊗yȳᵀ)) """
-function get_Lxx̄ᵀ_tens_yȳᵀ(xx̄ᵀ_tens_yȳᵀ,Lx)
+"""Returns Lᴿ(ℜe(xx̄ᵀ⊗yȳᵀ)), Lᴿ(ℑm(xx̄ᵀ⊗yȳᵀ)) """
+function idx2varxx̄ᵀtyȳᵀ(Lx,xx̄ᵀtyȳᵀ)
     T =  Dict()
-    for k in ["real", "imag"]
-        sleut = [key for key in keys(xx̄ᵀ_tens_yȳᵀ[k])]
-        T[k] =   Utils_cons.index_to_var(Lx,xx̄ᵀ_tens_yȳᵀ[k][popfirst!(sleut)])
-        for key in sleut
-            key = sleut[1]
-            if key[1] == '+'
-                T[k] = T[k] + Utils_cons.index_to_var(Lx,xx̄ᵀ_tens_yȳᵀ[k][key])
-            elseif key[1] == '-'
-                T[k] = T[k] - Utils_cons.index_to_var(Lx,xx̄ᵀ_tens_yȳᵀ[k][key])
-            end
+    for r in ["real", "imag"]
+        sleut = [keys(xx̄ᵀtyȳᵀ[r])...]
+        T[r] =   idx2var(Lx,xx̄ᵀtyȳᵀ[r][popfirst!(sleut)])
+        for k in sleut
+            (k[1] == '+') ? T[r] += idx2var(Lx,xx̄ᵀtyȳᵀ[r][k]) : T[r] -= idx2var(Lx,xx̄ᵀtyȳᵀ[r][k])
         end
     end
     return T
 end
+
+
 """ ?"""
-function get_Gℝ(xx̄ᵀ_tens_yȳᵀ) 
+function get_Gᴿ(xx̄ᵀ_tens_yȳᵀ) #???????
     Rxx̄ᵀ_tens_yȳᵀ = xx̄ᵀ_tens_yȳᵀ["real"]
     Ixx̄ᵀ_tens_yȳᵀ = xx̄ᵀ_tens_yȳᵀ["imag"]
     rkeys = [keys(Rxx̄ᵀ_tens_yȳᵀ)...]
@@ -62,7 +70,3 @@ end
 
 
 end
-# """"""
-# function get_L()
-#
-# end

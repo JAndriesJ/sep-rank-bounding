@@ -1,86 +1,53 @@
 module C_sep_Model
     using JuMP
-    using LinearAlgebra
+    # using LinearAlgebra
 
     srcDir = dirname(dirname(@__FILE__))
     include(srcDir*"\\Constraints\\C_constraints.jl")
     using .C_constraints
-
+    const ccon = C_constraints
     export Modelξₜˢᵉᵖ
 
-
     """The model"""
-    function Modelξₜˢᵉᵖ(ρ,d,t,con_list)
-        n = sum(2 .* d)
+    function Modelξₜˢᵉᵖ(ρ,d,t;con_list ="S_inf sG")
         model = JuMP.Model()
-        list_of_keys = C_constraints.make_mom_expo_keys(n,t) # Define variables in the moment matrix.
-        @variable(model, Lx[list_of_keys] ) #
+        @variable(model, Lx[ccon.make_mon_expo_keys(d,t[1])] )## Create variables
+        function set_con(c)
+            for k in keys(c)
+                 size(c[k]) == (1, 1) ?
+                 @constraint(model, c[k] .>= 0) :
+                 @constraint(model, c[k] in PSDCone())
+            end
+        end
+## Zero propagation: ρ = aaᵀ⊗bbᵀ , ρᵢⱼᵢⱼ = 0 ⟹ aᵢbⱼ = 0 ⟹ L(xᵢyⱼ) = 0
+        zp = ccon.zeroprop(ρ,d,t,Lx)
+        @constraint(model, zp .== zeros(size(zp)))
 ##      PSD Moment matrix blocks
-        PSD_MM_con = C_constraints.make_PSD_MM_con(d,t,Lx)
-        for b in keys(PSD_MM_con)
-            @constraint(model, Symmetric(PSD_MM_con[b]) in PSDCone())
-        end
+        PSD_con = ccon.make_PSD_con(d,t,Lx)
+        set_con(PSD_con)
 ## Fourth order Moment constraints: L(xxᵀ ⊗ yyᵀ) = ρ,
-        L_xx̄ᵀ_tens_yȳᵀ = C_constraints.make_ord4_con(d,Lx)
-        print(d)
-        print(size(L_xx̄ᵀ_tens_yȳᵀ["real"]))
-        @constraint(model, L_xx̄ᵀ_tens_yȳᵀ["real"] .== real(ρ) )
-        @constraint(model, L_xx̄ᵀ_tens_yȳᵀ["imag"] .== imag(ρ) )
-
+        L_xx̄ᵀ_tens_yȳᵀ = ccon.make_ord4_con(d,Lx)
+        @constraint(model, L_xx̄ᵀ_tens_yȳᵀ["real"] .== real(ρ))
+        @constraint(model, L_xx̄ᵀ_tens_yȳᵀ["imag"] .== imag(ρ))
 ## Localizing g constraint: L ≥ 0 on M₂ₜ(S)
-        if con_list != ""
-            if     occursin("S₁",con_list)
-                loc_con      = C_constraints.make_loc_cons_S₁(ρ,d,t,Lx)
-            elseif occursin("S₂",con_list)
-                loc_con      = C_constraints.make_loc_cons_S₂(ρ,d,t,Lx)
-            elseif occursin("S₃",con_list)
-                loc_con, loc_con_eq  = C_constraints.make_loc_cons_S₃(ρ,d,t,Lx)
-                for key in keys(loc_con_eq)
-                    @constraint(model, loc_con_eq[key] .==  zeros(size(loc_con_eq[key])))
-                end
+        if     occursin("S∞",con_list)
+            set_con(ccon.make_loc_cons_S_inf(ρ,d,t,Lx))
+        elseif occursin("S₂",con_list)
+            set_con(ccon.make_loc_cons_S₂(ρ,d,t,Lx))
+        elseif occursin("S₂₁",con_list)
+            loc_con, loc_con_eq  = ccon.make_loc_cons_S₂₁(ρ,d,t,Lx)
+            for k in keys(loc_con_eq)
+                @constraint(model, loc_con_eq[k] .==  zeros(size(loc_con_eq[k])))
             end
-
-            for key in keys(loc_con)
-                if isempty(loc_con[key])
-                    continue
-                end
-                if size(loc_con[key]) == (1, 1)
-                    @constraint(model, loc_con[key] .>= 0)
-                else
-                    @constraint(model, Symmetric(loc_con[key]) in PSDCone())
-                end
-            end
+            set_con(loc_con)
         end
-## weak G Constraints
-        # if occursin("wG",con_list)
-        #     println("----------------Weak G-constraints are active")
-        #     weakG_con = C_constraints.make_weakG_con(ρ,t,d,Lx)
-        #     for key in keys(weakG_con)
-        #         if isempty(weakG_con[key])
-        #             continue
-        #         end
-        #         if size(weakG_con[key]) == (1, 1)
-        #             @constraint(model, weakG_con[key] .>= 0)
-        #         else
-        #             @constraint(model, Symmetric(weakG_con[key]) in PSDCone())
-        #         end
-        #     end
-        #
-        # end
 ## G Constraints
         if  occursin("sG",con_list)
-            println("----------------G-constraints are active")
-            G_con                 = C_constraints.make_Gℝ_con(ρ,d,t,Lx)
-            for key in keys(G_con)
-                if isempty(G_con[key])
-                    continue
-                end
-                @constraint(model, Symmetric(G_con[key]) in PSDCone())
-            end
-
+            #println("----------------G-constraints are active")
+            set_con(ccon.make_Gᴿ_con(ρ,d,t,Lx))
         end
         #  Set objective
-        @objective(model, Min, Lx[zeros(n)])
+        @objective(model, Min, Lx[zeros(sum(2 .* d))])
         return model
     end
 end

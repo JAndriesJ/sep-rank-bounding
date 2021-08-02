@@ -18,6 +18,38 @@ using .R_constraints
 
 examples = Examples.get_examples()
 
+@testset "idx2var" begin
+    t = (2,2)
+    d = (2,2)
+    n = sum(d)
+    model = Model()
+    mom_list = R_constraints.make_mon_expo_keys(n,t[1]) # Define variables in the moment matrix.
+    @variable(model, Lx[mom_list] ) #
+    @test length(Lx) == 70
+
+    M_full = Moments.make_mon_expo(4,t;isle = true)
+    M      = M_full[1:4,1:4]
+    A      = reshape(1:16,4,4)
+    HC =    [Lx[[0, 0, 0, 0]]  Lx[[1, 0, 0, 0]]  Lx[[0, 1, 0, 0]]  Lx[[0, 0, 1, 0]]
+             Lx[[1, 0, 0, 0]]  Lx[[2, 0, 0, 0]]  Lx[[1, 1, 0, 0]]  Lx[[1, 0, 1, 0]]
+             Lx[[0, 1, 0, 0]]  Lx[[1, 1, 0, 0]]  Lx[[0, 2, 0, 0]]  Lx[[0, 1, 1, 0]]
+             Lx[[0, 0, 1, 0]]  Lx[[1, 0, 1, 0]]  Lx[[0, 1, 1, 0]]  Lx[[0, 0, 2, 0]]]
+    @test Utils_cons.idx2var(Lx, M) ==  HC
+    @test Utils_cons.idx2var(Lx, M, A) == A .* HC
+    M_dict = Dict(1 => M,
+                  2 => M_full[1:4,5:8],
+                  3 => M_full[5:8,1:4])
+    A_dict = Dict(1 => A,
+                  2 => 1 ./ A,
+                  3 => -A )
+    @test Utils_cons.idx2var(Lx, M_dict, A_dict) == Utils_cons.idx2var(Lx,M,A) +
+                                              Utils_cons.idx2var(Lx,M_full[1:4,5:8],1 ./ A) +
+                                              Utils_cons.idx2var(Lx,M_full[5:8,1:4],-A)
+end
+
+
+
+
 ## Separable states
 @testset "Randd₁4d₂4" begin
     ex = "Randd₁4d₂4"
@@ -73,64 +105,6 @@ end
     @test length(sep_Constraints.R_cons.make_G_con(ρ,d,t,Lx)) == 4
 end
 
-## Entangled states Complex states
-
-# @testset "CD2d₁3d₂4" begin
-#     ex = "CD2d₁3d₂4"
-#     d = Utils_states.extr_d(ex)
-#     @test d == (3,4)
-#     ρ = examples["ent"][ex]
-#     n = sum(2 .* d)
-#
-#     model = Model()
-#     t = (3,3)
-#     list_of_keys = Moments.make_mom_expo_keys(n,t) # Define variables in the moment matrix.
-#     @test length(list_of_keys) == 38760
-#     @variable(model, Lx[list_of_keys] ) #
-#     @test length(sep_Constraints.C_cons.make_loc_cons_S₁(ρ,d,t,Lx)) == 28
-#     @test length(sep_Constraints.C_cons.make_loc_cons_S₂(ρ,d,t,Lx)) == 8
-#     @test length(sep_Constraints.C_cons.make_loc_cons_S₃(ρ,d,t,Lx)[1]) == 4
-#     @test length(sep_Constraints.C_cons.make_weakG_con(ρ,d,t,Lx)) == 4
-#     @test length(sep_Constraints.C_cons.make_G_con(ρ,d,t,Lx)) == 6
-# end
-#
-# @testset "CD1d₁2d₂4" begin
-#     ex = "CD1d₁2d₂4"
-#     d = Utils_states.extr_d(ex)
-#     @test d == (2,4)
-#     ρ = examples["ent"][ex]
-#     n = sum(2 .* d)
-#
-#     model = Model()
-#     t = (3,3)
-#     list_of_keys = Moments.make_mom_expo_keys(n,t) # Define variables in the moment matrix.
-#     @test length(list_of_keys) == 18564
-#     @variable(model, Lx[list_of_keys] ) #
-#     @test length(sep_Constraints.C_cons.make_loc_cons_S₁(ρ,d,t,Lx)) == 24
-#     @test length(sep_Constraints.C_cons.make_loc_cons_S₂(ρ,d,t,Lx)) == 8
-#     @test length(sep_Constraints.C_cons.make_loc_cons_S₃(ρ,d,t,Lx)) == 2
-#     @test length(sep_Constraints.C_cons.make_weakG_con(ρ,d,t,Lx)["i", "evev"]) == 1024
-#     @test length(sep_Constraints.C_cons.make_G_con(ρ,d,t,Lx)) == 6
-# end
-#
-# @testset "HHH1d₁2d₂2" begin
-#     ex = "HHH1d₁2d₂2"
-#     d = Utils_states.extr_d(ex)
-#     @test d == (2,2)
-#     ρ = examples["ent"][ex]
-#     n = sum(2 .* d)
-#
-#     model = Model()
-#     t = (2,2)
-#     list_of_keys = Moments.make_mom_expo_keys(n,t) # Define variables in the moment matrix.
-#     @test length(list_of_keys) == 495
-#     @variable(model, Lx[list_of_keys] ) #
-#     @test length(sep_Constraints.C_cons.make_loc_cons_S₁(ρ,d,t,Lx)) == 16
-#     @test length(sep_Constraints.C_cons.make_loc_cons_S₂(ρ,d,t,Lx)) == 8
-#     @test length(sep_Constraints.C_cons.make_loc_cons_S₃(ρ,d,t,Lx)) == 2
-#     @test length(sep_Constraints.C_cons.make_weakG_con(ρ,d,t,Lx)) == 0
-#     @test length(sep_Constraints.C_cons.make_G_con(ρ,d,t,Lx)) == 2
-# end
 
 end
 

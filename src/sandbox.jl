@@ -1,105 +1,137 @@
-# using Revise
-sep_rank_proj_path = dirname(dirname(@__FILE__))
-srcDir  = sep_rank_proj_path*"\\src\\";
-# testDir = sep_rank_proj_path*"\\test\\";
 
-using JuMP
 
-include(srcDir*"Examples\\Examples.jl")
-include(srcDir*"Moments\\Moments.jl")
-include(srcDir*"Constraints\\Utils_cons.jl")
-include(srcDir*"Constraints\\C_constraints.jl")
-include(srcDir*"Model\\C_sep_Model.jl")
-include(srcDir*"Model\\Utils_Model.jl")
-include(srcDir*"sep_Compute.jl")
-
-using .Examples
+include(dirname(@__FILE__)*"\\Moments\\Moments.jl")
+include(dirname(@__FILE__)*"\\Constraints\\Utils_cons.jl")
 using .Moments
 using .Utils_cons
-using .C_constraints
-using .C_sep_Model
-using .Utils_Model
-using .sep_Compute
+
+d = (2,2)
+t = (2,2)
+n = sum(d.*2)
+
+xx̄yȳMM_blocks = get_xx̄yȳMM_blocks(d,t)
+γγᶥζζᶥ_δδᶥηηᶥ = get_γγᶥζζᶥ_δδᶥηηᶥ(d,t)
 
 
+I²₀₋₁ =  xx̄yȳMM_blocks[(0,-1)]
+display(I²₀₋₁)
+split_expo(ααᶥββᶥ,d) =     (ααᶥββᶥ[1:d[1]],
+                            ααᶥββᶥ[d[1]+1:2*d[1]],
+                            ααᶥββᶥ[1+2*d[1]:2*d[1]+d[2]],
+                            ααᶥββᶥ[1+2*d[1]+d[2]:end])
+display(map(x->split_expo(x,d),I²₀₋₁))
+display(γγᶥζζᶥ_δδᶥηηᶥ[I²₀₋₁[1,1]])
 
 
-t = (3,3)
-examples = Examples.get_examples()
-save_dir = sep_rank_proj_path*"\\PreRunModels\\"
-
-Utils_Model.batch_model(t,examples["ent"]["real"],save_dir,["S₁sG"],false)
-Utils_Model.batch_model(t,examples["sep"]["real"],save_dir,["S₁sG"],false)
-Utils_Model.batch_model(t,examples["ent"]["imag"],save_dir,["S₁sG"],false)
-Utils_Model.batch_model(t,examples["sep"]["imag"],save_dir,["S₁sG"],false)
-
-boundsDir = save_dir*"t=2\\ent\\real\\"
-boundsDir = save_dir*"t=2\\sep\\real\\"
-boundsDir = save_dir*"t=3\\ent\\real\\"
-boundsDir = save_dir*"t=3\\sep\\real\\"
-boundsDir = save_dir*"t=4\\ent\\real\\"
-boundsDir = save_dir*"t=4\\sep\\real\\"
-
-boundsDir = save_dir*"t=2\\ent\\imag\\"
-boundsDir = save_dir*"t=2\\sep\\imag\\"
-boundsDir = save_dir*"t=3\\ent\\imag\\"
-boundsDir = save_dir*"t=3\\sep\\imag\\"
-
-
-boundsDir = save_dir*"C-models\\t=2\\"
-if true
-    datsFiles = [file for file in readdir(boundsDir,join = true) if contains(file,".dat-s")]
-    file_loc = boundsDir*"Summary.csv"
-    touch(file_loc)
-    open(file_loc,"a") do io
-        write(io, "|ex|d|con|Primal|Dual|obj_val|\n")
-    end
-    for file in datsFiles
-        mod = Utils_Model.read_model(file)
-        sep_mod_opt = sep_Compute.Computeξₜˢᵉᵖ(mod)
-
-        # ex,d,rank,con   =  extract_sep_bound_file_meta(basename(file))
-        name = split(basename(file),".")[1]
-        con = split(name,"_")[2]
-        name = split(name,"_")[1]
-        dstr = name[(end-9):end]
-        ex = name[1:end-10]
-
-        pstat = JuMP.primal_status(sep_mod_opt)
-        dstat = JuMP.dual_status(sep_mod_opt)
-        ov    = round(JuMP.objective_value(sep_mod_opt),digits=2)
-
-        open(file_loc,"a") do io
-            write(io, "|$ex|$dstr|$con|$pstat|$dstat|$ov| \n")
-        end
-    end
+pf(x) = prod(factorial.(x))
+function get_coef(part1,part2,d)
+    γ,γᶥ,ζ,ζᶥ = split_expo(part1,d) ; δ,δᶥ,η,ηᶥ = split_expo(part2,d)
+    a = ((-1.0)^sum(δᶥ+ηᶥ))*((1.0im)^sum(δ+δᶥ+η+ηᶥ))*prod(pf.([[γ,γᶥ,ζ,ζᶥ]+[δ,δᶥ,η,ηᶥ]...]))
+    return a/prod(pf.([γ,γᶥ,ζ,ζᶥ,δ,δᶥ,η,ηᶥ]))
 end
+get_coef(γ_δ_pair,d) = map((x,y)->get_coef(x,y,d),γ_δ_pair...)
+
+get_coef(γγᶥζζᶥ_δδᶥηηᶥ[I²₀₋₁[1,1]],d)
+
+
+MMexᴿ,MMCoefᴿ = Moments.get_ℜℑααᶥββᶥᴿ(d,I²₀₋₁,γγᶥζζᶥ_δδᶥηηᶥ)
+
+MMex = map(x->get_ℜℑααᶥββᶥᴿ(d,x,γγᶥζζᶥ_δδᶥηηᶥ)[1],I²₀₋₁)
+MMCoef = map(x->get_ℜℑααᶥββᶥᴿ(d,x,γγᶥζζᶥ_δδᶥηηᶥ)[2],I²₀₋₁)
 
 
 
 
 
 
-## Block diag ℂ
-CMM = Moments.make_mon_expo_mat(n,(2,0))
-kwartsum(arr) = [sum(arr[1:d[1]]),sum(arr[d[1]+1:2*d[1]]),sum(arr[(2*d[1]+1):(2*d[1]+d[2])]),sum(arr[(2*d[1]+d[2]+1):end])]
-halfdiff(arr) = [arr[1]- arr[2],arr[3]- arr[4]]
-ks = kwartsum.(CMM)
-hf = halfdiff.(ks)
-
-bind = unique(hf)
-
-nar = Dict()
-for b in bind
-    temp1  = findall([ent == b for ent in hf])
-    nar[b] = [t[1]  for t in temp1 ]
-end
 
 
-findall(nar[[0,2]])
 
-fieldnames(CartesianIndex)
 
-using Combinatorics
-k = (2,2,0)
-multinomial(k...)
+
+
+
+
+
+using JuMP
+model = JuMP.Model()
+@variable(model, Lx[Moments.make_mon_expo(d,t[1]*2)] ) ## Create variables
+
+
+MMexᴿ,MMCoefᴿ = Moments.get_ℂ_block_diag(d,t .- 1)
+PSD_con = Utils_cons.idx2var(Lx,MMexᴿ,MMCoefᴿ)
+
+
+
+
+
+
+
+
+
+
+B = MMexᴿ[(-1,0)]
+C = MMCoefᴿ[(-1,0)]
+
+b = B[1,1]
+c = C[1,1]
+
+Utils_cons.idx2var(Lx,b)
+Utils_cons.idx2var(Lx,b,c)
+Utils_cons.idx2var(Lx,b,c,[Utils_cons.eᵢ(n,0)])
+
+Gar  = Utils_cons.idx2var_arr(Lx,B,C)
+Gary = Utils_cons.idx2var_arr(Lx,B,C,[Utils_cons.eᵢ(n,1)])
+
+DGar  = Utils_cons.idx2var(Lx,MMexᴿ,MMCoefᴿ)
+DGary = Utils_cons.idx2var(Lx,MMexᴿ,MMCoefᴿ,[Utils_cons.eᵢ(n,1)])
+
+DGar[(-1,0)] == Gar
+DGary[(-1,0)] == Gary
+
+
+# @test split_expo([1,1,1,2,2,2,3,3,3,4,4,4],(3,3)) == ([1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4])
+# γ,γᶥ,δ,δᶥ = split_expo([2,0,0,0,0,0,1,0,0,0,0,0],(3,3))
+# η,ηᶥ,ζ,ζᶥ = split_expo([0,0,0,0,0,0,2,0,0,0,0,0],(3,3))
+# a = ((-1)^sum(δᶥ + ζᶥ) * (im)^sum(δ+δᶥ+ζ+ζᶥ))* pf(γ + δ) * pf(γᶥ + δᶥ) * pf(η + ζ) * pf(ηᶥ + ζᶥ)
+# b = pf(γ)*pf(γᶥ)*pf(δ)*pf(δᶥ)*pf(η)*pf(ηᶥ)*pf(ζ)*pf(ζᶥ)
+# @test get_coef([2,0,0,0,0,0,1,0,0,0,0,0],[0,0,0,0,0,0,2,0,0,0,0,0],(3,3)) ==  a/b
+# asdf = [keys(γγᶥδδᶥζζᶥηηᶥ)...]
+# @test length(asdf) == binomial(sum(2 .* d)+sum(t),sum(t))
+
+# MMB = get_xx̄yȳMM_blocks(d,t)
+# γγᶥδδᶥζζᶥηηᶥ = get_γγᶥδδᶥζζᶥηηᶥ(d,t)
+#
+# MMexᴿ,MMCoefᴿ = get_ℜℑααᶥββᶥᴿ(d,MMB[(-1,-1)],γγᶥδδᶥζζᶥηηᶥ)
+#
+# γγᶥδδᶥζζᶥηηᶥ[MMB[(-1,-1)][1,1]]
+#
+
+
+
+include(srcDir*"Examples\\Utils_states.jl")
+using .Utils_states
+using LinearAlgebra
+
+ρ =    [2 3 4 3 4 5 4 5 6
+        3 5 7 4 6 8 5 7 9
+        4 7 10 5 8 11 6 9 12
+        3 4 5 5 6 7 7 8 9
+        4 6 8 6 8 10 8 10 12
+        5 8 11 7 10 13 9 12 15
+        4 5 6 7 8 9 10 11 12
+        5 7 9 8 10 12 11 13 15
+        6 9 12 9 12 15 12 15 18]
+ρᵀᵇ =  Utils_states.take_Pᵀ(ρ,1,(3,3))
+
+m = diagm(sqrt.(1 ./ diag(ρ)))
+mρm = m*ρ*m
+mρmᵀᵇ =  Utils_states.take_Pᵀ(mρm,1,(3,3))
+
+eigvals(ρ)[1]
+eigvals(ρᵀᵇ)[1]
+
+eigvals(m*ρ*m)[1]
+eigvals(m*ρᵀᵇ*m)[1]
+
+eigvals(mρmᵀᵇ)[1]

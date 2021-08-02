@@ -13,7 +13,7 @@ using .sep_Model
     ρ_sep  = ρ_dict["sep"]
     ρ = ρ_sep["sep3d3r3"]
     t = 3
-    con_list = "S₁S₂S₃wGsG"
+    con_list = "S₁S₂S₃sG"
 
     sep_mod = Modelξₜˢᵉᵖ(ρ,t,con_list)
 
@@ -29,6 +29,6 @@ using .sep_Model
     sep_mod_read = read_model(pwd()*"\\Defualt_sep_mod.dat-s")
     # @test sep_mod_read  == sep_mod
 end
-# batch_model
+
 
 end

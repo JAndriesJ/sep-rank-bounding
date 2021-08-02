@@ -8,15 +8,7 @@ using .Utils_states
 const us = Utils_states
 
 
-export get_ent_examples,
-       get_ρ_wiki,
-       get_ρ_HHH1,
-       get_ρ_HHH2,
-       get_ρ_DNY2,
-       get_ρ_BP,
-       get_ρ_HK,
-       get_ρ_CD1,
-       get_ρ_CD2
+export get_ent_examples
 
 ## Entangled States
 """
@@ -24,59 +16,54 @@ Entangled state examples:
 """
 function get_ent_example()
     ρ = Dict()
-    ρ["real"] = Dict()
-    ρ["imag"] = Dict()
 
-    ρ["real"]["wiki2d₁3d₂3"] = get_ρ_wiki(2)
-    ρ["real"]["HKd₁3d₂3"]    = get_ρ_HK()
+    ρ["Eq22HHH96a"] = get_ρ_Eq22HHH96(0.25,0.5,0.25)
+    ρ["Eq22HHH96b"] = get_ρ_Eq22HHH96(0.5,0.25,0.25)
+    ρ["Eq22HHH96c"] = get_ρ_Eq22HHH96(0.75,0.5,0.85)
 
-    ρ["imag"]["CD1d₁2d₂3"]   = get_ρ_CD1(3)
-    ρ["imag"]["CD1d₁2d₂4"]   = get_ρ_CD1(4)
-    ρ["imag"]["CD1d₁2d₂5"]   = get_ρ_CD1(5)
-    ρ["imag"]["CD1d₁2d₂6"]   = get_ρ_CD1(6)
-    ρ["imag"]["CD2d₁3d₂4"]   = get_ρ_CD2()
-    ρ["imag"]["BPd₁3d₂3"]    = get_ρ_BP()
-    # ρ["wiki1d₁2d₂2"] = get_ρ_wiki(1)
-    # ρ["HHH1d₁2d₂2"]  = get_ρ_HHH1(0.75)
-    # ρ["HHH2d₁2d₂2"]  = get_ρ_HHH2(0.75)
-    # ρ["DNY2d₁2d₂2"]  = get_ρ_DNY2()
-    ρ_new = Dict()
-    for k in ["real", "imag"]
-        ρ_new[k] = Dict()
-        for key in keys(ρ[k])
-            ρ_new[k][key] = Utils_states.maketraceone(ρ[k][key])
-        end
+    ρ["Eq25HHH96"]  = get_ρ_Eq25HHH96(0.3)
+
+    seed = 343
+    Random.seed!(seed)
+    ρ["Eq2-3BP00a"] = get_ρ_Eq2_3BP00(randn(8) + im *randn(8)...)
+    ρ["Eq2-3BP00b"] = get_ρ_Eq2_3BP00(randn(8) + im *randn(8)...)
+    ρ["Eq2-3BP00c"] = get_ρ_Eq2_3BP00(randn(8) + im *randn(8)...)
+    ρ["Eq2-3BP00d"] = get_ρ_Eq2_3BP00(randn(8) + im *randn(8)...)
+    ρ["Eq2-3BP00e"] = get_ρ_Eq2_3BP00(randn(8) + im *randn(8)...)
+
+    ρ["Eq14Hor97a"] = get_ρ_Eq14Hor97(0.25)
+    ρ["Eq14Hor97b"] = get_ρ_Eq14Hor97(0.5)
+    ρ["Eq14Hor97c"] = get_ρ_Eq14Hor97(0.75)
+
+    # ρ["Eq32Hor97a"] = get_ρ_Eq32Hor97(0.25) # Wrong shape
+    # ρ["Eq32Hor97b"] = get_ρ_Eq32Hor97(0.5)
+    # ρ["Eq32Hor97c"] = get_ρ_Eq32Hor97(0.75)
+
+    ρ["p12HK14a"]   = get_ρ_p12HK14(0.5)
+    ρ["p12HK14b"]   = get_ρ_p12HK14(2)
+    ρ["p12HK14c"]   = get_ρ_p12HK14(3)
+
+    for key in keys(ρ)
+        ρ[key] = Utils_states.maketraceone(ρ[key])
     end
 
-    return ρ_new
+
+    return ρ
 end
 
 
 ## Examples
-
-
-"""# # Example 1: https://en.wikipedia.org/wiki/Quantum_entanglement"""
-function get_ρ_wiki(i)
-    ρ = Dict()
-    ϕ = [1, 0, 0, 1]
-    ρ[1] = ϕ*transpose(ϕ)
-
-    # = |00><00| + |02><02| + 2|11><11| + (|01> + |10>)(<01| + <10|)
-    ψ₀₁ = us.ψ(1,2,3)
-    ψ₁₀ = us.ψ(2,1,3)
-    ρ[2] = us.psep(1,1,3) + us.psep(1,3,3) + 2*us.psep(2,2,3) + us.sq(ψ₀₁ + ψ₁₀)
-    return ρ[i]
-end
-
 
 """
 ##    Separability of Mixed States: Necessary and Sufficient Conditions
 ##    Michal Horodecki, Pawel Horodecki, Ryszard Horodecki
 ## http://arxiv.org/abs/quant-ph/9605038v2  page 9 eq. (22)
 """
-function get_ρ_HHH1(p  = 0.75)
-    # Random.seed!(343)
-    a  = 0.5; b = 0.8; # arbitary possitive numbers
+function get_ρ_Eq22HHH96(a,b,p)
+    @assert 0 < a
+    @assert 0 < b
+    @assert a != b
+    @assert p != 0.5
     ψ₁ = a*us.ψ(2,2,2) + b*us.ψ(1,1,2)
     ψ₂ = a*us.ψ(2,1,2) + b*us.ψ(1,2,2)
     ρ_temp = p*us.sq(ψ₁) + (1 - p)*us.sq(ψ₂)
@@ -86,7 +73,8 @@ end
 """
 ##   page 10 eq. (25) fails PPT
 """
-function get_ρ_HHH2(p= rand())
+function get_ρ_Eq25HHH96(p)
+    @assert p != 0
     a =  1/sqrt(2) ;
     ψₐ = a*(us.ψ(1,2,2) - us.ψ(2,1,2))
     ρ_temp = p*us.sq(ψₐ) + (1 - p)*us.psep(1,1,2)
@@ -94,28 +82,83 @@ function get_ρ_HHH2(p= rand())
 end
 
 """
-## Separability of Hermitian Tensors and PSD Decompositions
-## Mareike Dressler, Jiawang Nie, Zi Yang
-## https://arxiv.org/abs/2011.08132v1 Example 3.7
-# Hᵢ₁ᵢ₂ⱼ₁ⱼ₂ = i₁ + i₂ + j₁ + j₂
-"""
-function get_ρ_DNY2()
-    H_flat = [i₁ + i₂ + j₁ + j₂ for i₁ in 1:2 for i₂ in 1:2 for j₁ in 1:2 for j₂ in 1:2 ]
-    return  reshape(H_flat,4,4)
-end
-"""
 ## 1999, Bruß,Peres,Construction of quantum states with bound entanglement.pdf
 ## https://arxiv.org/abs/quant-ph/9911056v1
 """
-function get_ρ_BP()
-    m,s,n,a,b,c,t,d = randn(8) + im *randn(8)
-    V₁ =  [m  0  s 0  n  0  0  0  0]
+function get_ρ_Eq2_3BP00(m,s,n,a,b,c,t,d)
+    # randn(8) + im *randn(8))
+    V₁ =   [m  0  s 0  n  0  0  0  0]
     V₂ =   [0  a  0 b  0  c 0  0  0]
     V₃ =   [conj(n)  0   0  0  -conj(m)  0    t      0     0]
     V₄ = [0    conj(b)  0 -conj(a)   0   0   0      d      0]
     ρ =  adjoint(V₁)*V₁  + adjoint(V₂)*V₂  +adjoint(V₃)*V₃  + adjoint(V₄)*V₄
     return ρ
 end
+
+function get_ρ_Eq14Hor97(a)
+    @assert a > 0
+    @assert a < 1
+    b = (1+a)/2
+    c = (sqrt(1-a^2)/2)
+    ρ =     (1/(8*a+1))*[a 0 0 0 a 0 0 0 a
+                         0 a 0 0 0 0 0 0 0
+                         0 0 a 0 0 0 0 0 0
+                         0 0 0 a 0 0 0 0 0
+                         a 0 0 0 a 0 0 0 a
+                         0 0 0 0 0 a 0 0 0
+                         0 0 0 0 0 0 b 0 c
+                         0 0 0 0 0 0 0 a 0
+                         a 0 0 0 a 0 c 0 b]
+
+    return ρ
+end
+
+function get_ρ_Eq32Hor97(b)
+    @assert b > 0
+    @assert b < 1
+    a = (1+b)/2
+    c = (sqrt(1-b^2)/2)
+    ρ =     (1/(7*b+1))*[b 0 0 0 0 b 0 0
+                         0 b 0 0 0 0 b 0
+                         0 0 b 0 0 0 0 b
+                         0 0 0 b 0 0 0 0
+                         0 0 0 0 a 0 0 c
+                         b 0 0 0 0 b 0 0
+                         0 b 0 0 0 0 b 0
+                         0 0 b 0 c 0 0 a]
+
+    return ρ
+end
+
+"""
+##Separable states with unique decompositions,
+## Kil-Chan Ha, Seung-Hyeok Kye
+## https://arxiv.org/abs/1210.1088v5
+"""
+function get_ρ_p12HK14(b)
+    @assert b >  0
+    @assert b != 1.0
+    c = 3*(1+b+1/b)
+    ρ =  (1/c)*[1 0 0 0 1 0 0 0 1
+                0 b 0 1 0 0 0 0 0
+                0 0 1/b 0 0 0 1 0 0
+                0 1 0 1/b 0 0 0 0 0
+                1 0 0 0 1 0 0 0 1
+                0 0 0 0 0 b 0 1 0
+                0 0 1 0 0 0 b 0 0
+                0 0 0 0 0 1 0 1/b 0
+                1 0 0 0 1 0 0 0 1]
+    return ρ
+end
+
+function get_ρ_Eq5TAH12()
+
+end
+
+function get_ρ_Eq6CR11(a,λ₁,λ₂)
+
+end
+
 
 """
 ## 2013,Chen,Dokovic,Dimensions, lengths and separability in finite-dimensional quantum systems
@@ -209,24 +252,34 @@ function get_ρ_CD2()
     return ρ
 end
 
-"""
-##Separable states with unique decompositions,
-## Kil-Chan Ha, Seung-Hyeok Kye
-## https://arxiv.org/abs/1210.1088v5
-"""
-function get_ρ_HK(b = 2)
-    # @assert b == 1.0
-    c = 3*(1+b+1/b)
-    ρ =  (1/c)*[1 0 0 0 1 0 0 0 1
-                0 b 0 1 0 0 0 0 0
-                0 0 1/b 0 0 0 1 0 0
-                0 1 0 1/b 0 0 0 0 0
-                1 0 0 0 1 0 0 0 1
-                0 0 0 0 0 b 0 1 0
-                0 0 1 0 0 0 b 0 0
-                0 0 0 0 0 1 0 1/b 0
-                1 0 0 0 1 0 0 0 1]
-    return ρ
-end
+
+
+
 
 end
+
+
+# """# # Example 1: https://en.wikipedia.org/wiki/Quantum_entanglement"""
+# function get_ρ_wiki(i)
+#     ρ = Dict()
+#     ϕ = [1, 0, 0, 1]
+#     ρ[1] = ϕ*transpose(ϕ)
+#
+#     # = |00><00| + |02><02| + 2|11><11| + (|01> + |10>)(<01| + <10|)
+#     ψ₀₁ = us.ψ(1,2,3)
+#     ψ₁₀ = us.ψ(2,1,3)
+#     ρ[2] = us.psep(1,1,3) + us.psep(1,3,3) + 2*us.psep(2,2,3) + us.sq(ψ₀₁ + ψ₁₀)
+#     return ρ[i]
+# end
+
+
+# """
+# ## Separability of Hermitian Tensors and PSD Decompositions
+# ## Mareike Dressler, Jiawang Nie, Zi Yang
+# ## https://arxiv.org/abs/2011.08132v1 Example 3.7
+# # Hᵢ₁ᵢ₂ⱼ₁ⱼ₂ = i₁ + i₂ + j₁ + j₂
+# """
+# function get_ρ_DNY2()
+#     H_flat = [i₁ + i₂ + j₁ + j₂ for i₁ in 1:2 for i₂ in 1:2 for j₁ in 1:2 for j₂ in 1:2 ]
+#     return  reshape(H_flat,4,4)
+# end
